@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a3a6b">
+<link rel="manifest" href="manifest.json">
+<title>متابعة فصل الشهيد مارجرجس</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="offline-bar" class="offline-bar">لا يوجد اتصال — البيانات محفوظة محلياً وستُزامَن تلقائياً</div>
+<div id="sync-toast" class="sync-toast hidden"></div>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen" class="screen active">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="cross-icon">✝</div>
+        <h2>كنيسة الشهيد مارجرجس</h2>
+        <p>نظام متابعة الأولاد</p>
+      </div>
+      <div class="form-group">
+        <label>اسمك</label>
+        <input id="login-name" type="text" placeholder="اكتب اسمك" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>كلمة المرور</label>
+        <input id="login-pass" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="doLogin()">دخول ✝</button>
+      <div id="login-error" class="error-msg"></div>
+      <div class="login-hint">
+        خدام الفصل: <b>margirgis</b><br>
+        أمناء الخدمة: <b>admin2024</b>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOME ===== -->
+<div id="home-screen" class="screen">
+  <div class="topbar">
+    <h1 id="home-title">فصل الشهيد مارجرجس</h1>
+    <span id="home-role" class="role-badge"></span>
+    <button class="topbar-btn" onclick="doLogout()">خروج</button>
+  </div>
+  <div class="content">
+    <div class="welcome-card">
+      <div class="welcome-cross">✝</div>
+      <h2>أهلاً، <span id="servant-name-display"></span></h2>
+      <p>متابعة أولاد فصل الشهيد مارجرجس</p>
+      <div class="week-badge" id="current-week-label"></div>
+    </div>
+    <div class="stats-row" id="home-stats"></div>
+    <div class="section-title">الخدمات</div>
+    <div class="menu-grid">
+      <div class="menu-card green" onclick="goTo('att-screen')">
+        <div class="menu-icon">📋</div>
+        <div class="menu-label">تسجيل الحضور</div>
+        <div class="menu-sub">حضور الأسبوع</div>
+      </div>
+      <div class="menu-card orange" onclick="goTo('students-screen','call')">
+        <div class="menu-icon">📞</div>
+        <div class="menu-label">تسجيل مكالمة</div>
+        <div class="menu-sub">مكالمة أسبوعية</div>
+      </div>
+      <div class="menu-card purple" onclick="goTo('students-screen','visit')">
+        <div class="menu-icon">🏠</div>
+        <div class="menu-label">تسجيل افتقاد</div>
+        <div class="menu-sub">زيارة بيتية</div>
+      </div>
+      <div class="menu-card blue" onclick="goTo('students-screen','profile')">
+        <div class="menu-icon">👦</div>
+        <div class="menu-label">ملفات الأولاد</div>
+        <div class="menu-sub">بيانات وتاريخ</div>
+      </div>
+    </div>
+    <div id="admin-btn-wrap" style="display:none;margin-top:4px">
+      <div class="menu-card admin full-width" onclick="goTo('admin-screen')">
+        <div class="menu-icon">📊</div>
+        <div class="menu-label">لوحة أمين الخدمة</div>
+        <div class="menu-sub">تقارير وإحصائيات شاملة</div>
+      </div>
+    </div>
+    <div id="db-status" class="db-status"></div>
+  </div>
+</div>
+
+<!-- ===== STUDENTS LIST ===== -->
+<div id="students-screen" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goBack()">→</button>
+    <h1 id="students-title">الأولاد</h1>
+  </div>
+  <div class="content">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input id="search-input" type="text" placeholder="ابحث بالاسم..." oninput="filterStudents()">
+    </div>
+    <div id="student-list-container" class="student-list"></div>
+  </div>
+</div>
+
+<!-- ===== ATTENDANCE ===== -->
+<div id="att-screen" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goBack()">→</button>
+    <h1>تسجيل الحضور</h1>
+    <div id="att-saving" class="saving-indicator"></div>
+  </div>
+  <div class="content">
+    <div class="week-selector">
+      <span class="week-label">الأسبوع:</span>
+      <select id="att-week-select" onchange="loadAttendance()"></select>
+    </div>
+    <div id="att-summary" class="att-summary"></div>
+    <div id="att-list" class="att-list"></div>
+    <div style="height:90px"></div>
+  </div>
+  <button class="save-fab" onclick="saveAttendance()">💾 حفظ الحضور</button>
+</div>
+
+<!-- ===== PROFILE ===== -->
+<div id="profile-screen" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goBack()">→</button>
+    <h1 id="profile-title">ملف الولد</h1>
+  </div>
+  <div class="content" id="profile-content"></div>
+</div>
+
+<!-- ===== ADMIN ===== -->
+<div id="admin-screen" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="goBack()">→</button>
+    <h1>لوحة أمين الخدمة</h1>
+  </div>
+  <div class="content">
+    <div class="tab-bar">
+      <div class="tab active" onclick="adminTab('overview')">نظرة عامة</div>
+      <div class="tab" onclick="adminTab('att')">الحضور</div>
+      <div class="tab" onclick="adminTab('followup')">المتابعة</div>
+    </div>
+    <div id="admin-overview"></div>
+    <div id="admin-att" style="display:none"></div>
+    <div id="admin-followup" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ===== NOTE MODAL ===== -->
+<div id="note-modal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3 id="note-modal-title">إضافة ملاحظة</h3>
+    <textarea id="note-text" placeholder="اكتب ملاحظتك هنا..." rows="4"></textarea>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="saveNote()">حفظ ✓</button>
+      <button class="btn btn-gray" onclick="closeModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
