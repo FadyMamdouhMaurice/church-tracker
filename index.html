@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1a3a6b">
 <link rel="manifest" href="manifest.json">
 <title>متابعة فصل الشهيد مارجرجس</title>
@@ -15,7 +14,7 @@
 <div id="offline-bar" class="offline-bar">لا يوجد اتصال — البيانات محفوظة محلياً وستُزامَن تلقائياً</div>
 <div id="sync-toast" class="sync-toast hidden"></div>
 
-<!-- ===== LOGIN ===== -->
+<!-- LOGIN -->
 <div id="login-screen" class="screen active">
   <div class="login-wrap">
     <div class="login-box">
@@ -34,15 +33,12 @@
       </div>
       <button class="btn btn-primary" onclick="doLogin()">دخول ✝</button>
       <div id="login-error" class="error-msg"></div>
-      <div class="login-hint">
-        خدام الفصل: <b>margirgis</b><br>
-        أمناء الخدمة: <b>admin2024</b>
-      </div>
+      <div class="login-hint">خدام الفصل: <b>margirgis</b><br>أمناء الخدمة: <b>admin2024</b></div>
     </div>
   </div>
 </div>
 
-<!-- ===== HOME ===== -->
+<!-- HOME -->
 <div id="home-screen" class="screen">
   <div class="topbar">
     <h1 id="home-title">فصل الشهيد مارجرجس</h1>
@@ -59,39 +55,30 @@
     <div class="stats-row" id="home-stats"></div>
     <div class="section-title">الخدمات</div>
     <div class="menu-grid">
-      <div class="menu-card green" onclick="goTo('att-screen')">
-        <div class="menu-icon">📋</div>
-        <div class="menu-label">تسجيل الحضور</div>
-        <div class="menu-sub">حضور الأسبوع</div>
+      <div class="menu-card green"  onclick="goTo('att-screen')">
+        <div class="menu-icon">📋</div><div class="menu-label">تسجيل الحضور</div><div class="menu-sub">حضور الأسبوع</div>
       </div>
       <div class="menu-card orange" onclick="goTo('students-screen','call')">
-        <div class="menu-icon">📞</div>
-        <div class="menu-label">تسجيل مكالمة</div>
-        <div class="menu-sub">مكالمة أسبوعية</div>
+        <div class="menu-icon">📞</div><div class="menu-label">تسجيل مكالمة</div><div class="menu-sub">مكالمة أسبوعية</div>
       </div>
       <div class="menu-card purple" onclick="goTo('students-screen','visit')">
-        <div class="menu-icon">🏠</div>
-        <div class="menu-label">تسجيل افتقاد</div>
-        <div class="menu-sub">زيارة بيتية</div>
+        <div class="menu-icon">🏠</div><div class="menu-label">تسجيل افتقاد</div><div class="menu-sub">زيارة بيتية</div>
       </div>
-      <div class="menu-card blue" onclick="goTo('students-screen','profile')">
-        <div class="menu-icon">👦</div>
-        <div class="menu-label">ملفات الأولاد</div>
-        <div class="menu-sub">بيانات وتاريخ</div>
+      <div class="menu-card blue"   onclick="goTo('students-screen','profile')">
+        <div class="menu-icon">👦</div><div class="menu-label">ملفات الأولاد</div><div class="menu-sub">بيانات وتاريخ</div>
       </div>
     </div>
     <div id="admin-btn-wrap" style="display:none;margin-top:4px">
       <div class="menu-card admin full-width" onclick="goTo('admin-screen')">
         <div class="menu-icon">📊</div>
-        <div class="menu-label">لوحة أمين الخدمة</div>
-        <div class="menu-sub">تقارير وإحصائيات شاملة</div>
+        <div><div class="menu-label">لوحة أمين الخدمة</div><div class="menu-sub">تقارير وإحصائيات شاملة</div></div>
       </div>
     </div>
     <div id="db-status" class="db-status"></div>
   </div>
 </div>
 
-<!-- ===== STUDENTS LIST ===== -->
+<!-- STUDENTS LIST -->
 <div id="students-screen" class="screen">
   <div class="topbar">
     <button class="topbar-back" onclick="goBack()">→</button>
@@ -106,7 +93,7 @@
   </div>
 </div>
 
-<!-- ===== ATTENDANCE ===== -->
+<!-- ATTENDANCE -->
 <div id="att-screen" class="screen">
   <div class="topbar">
     <button class="topbar-back" onclick="goBack()">→</button>
@@ -125,7 +112,7 @@
   <button class="save-fab" onclick="saveAttendance()">💾 حفظ الحضور</button>
 </div>
 
-<!-- ===== PROFILE ===== -->
+<!-- PROFILE -->
 <div id="profile-screen" class="screen">
   <div class="topbar">
     <button class="topbar-back" onclick="goBack()">→</button>
@@ -134,7 +121,7 @@
   <div class="content" id="profile-content"></div>
 </div>
 
-<!-- ===== ADMIN ===== -->
+<!-- ADMIN -->
 <div id="admin-screen" class="screen">
   <div class="topbar">
     <button class="topbar-back" onclick="goBack()">→</button>
@@ -152,18 +139,23 @@
   </div>
 </div>
 
-<!-- ===== NOTE MODAL ===== -->
+<!-- NOTE MODAL -->
 <div id="note-modal" class="modal-overlay hidden">
   <div class="modal">
     <h3 id="note-modal-title">إضافة ملاحظة</h3>
     <textarea id="note-text" placeholder="اكتب ملاحظتك هنا..." rows="4"></textarea>
     <div class="modal-btns">
       <button class="btn btn-primary" onclick="saveNote()">حفظ ✓</button>
-      <button class="btn btn-gray" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-gray"    onclick="closeModal()">إلغاء</button>
     </div>
   </div>
 </div>
 
-<script type="module" src="app.js"></script>
+<!-- Firebase compat SDK (no ES modules needed) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- App (plain script, all functions global) -->
+<script src="app.js"></script>
 </body>
 </html>
