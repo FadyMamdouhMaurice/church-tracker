@@ -11,6 +11,8 @@ const HomeScreen = (() => {
     Utils.on('btn-visit',   'click', () => Router.go('students', 'visit'));
     Utils.on('btn-profile', 'click', () => Router.go('students', 'profile'));
     Utils.on('btn-mass',        'click', () => Router.go('mass'));
+    Utils.on('btn-events',      'click', () => Router.go('events'));
+    Utils.on('btn-reports',     'click', () => Router.go('reports'));
     Utils.on('btn-admin',       'click', () => Router.go('admin'));
     Utils.on('btn-servant-att', 'click', () => Router.go('servant-att'));
 
