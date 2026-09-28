@@ -36,6 +36,8 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     if (body.action === 'saveRecord')    return buildResponse(saveRecord(body.record));
     if (body.action === 'updateStudent') return buildResponse(updateStudentRow(body.student));
+    if (body.action === 'uploadPhoto')   return buildResponse(uploadPhoto(body));
+    if (body.action === 'getPhoto')      return buildResponse(getStudentPhoto(body.studentId));
     return buildResponse({ error: 'unknown action' });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -208,4 +210,66 @@ function buildResponse(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Upload student photo to Drive ────────────
+// Called via POST { action:'uploadPhoto', studentId, fileName, base64Data, mimeType }
+// Returns { status:'saved', url, fileId }
+function uploadPhoto(params) {
+  try {
+    var folderId = '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5';
+    var folder   = DriveApp.getFolderById(folderId);
+
+    // Delete old photo for this student if exists
+    var oldFiles = folder.getFilesByName('student_' + params.studentId + '.jpg');
+    while (oldFiles.hasNext()) oldFiles.next().setTrashed(true);
+    var oldFiles2 = folder.getFilesByName('student_' + params.studentId + '.png');
+    while (oldFiles2.hasNext()) oldFiles2.next().setTrashed(true);
+    var oldFiles3 = folder.getFilesByName('student_' + params.studentId + '.webp');
+    while (oldFiles3.hasNext()) oldFiles3.next().setTrashed(true);
+
+    // Decode base64 and save
+    var ext      = (params.mimeType === 'image/png') ? '.png' : '.jpg';
+    var fileName = 'student_' + params.studentId + ext;
+    var blob     = Utilities.newBlob(
+      Utilities.base64Decode(params.base64Data),
+      params.mimeType,
+      fileName
+    );
+    var file = folder.createFile(blob);
+
+    // Make file publicly readable (so app can display it)
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    // Return direct image URL (thumbnail format — works without auth)
+    var fileId = file.getId();
+    var url    = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+
+    return { status: 'saved', url: url, fileId: fileId };
+  } catch(err) {
+    return { error: err.message };
+  }
+}
+
+// ── Get photo URL for student ─────────────────
+function getStudentPhoto(studentId) {
+  try {
+    var folderId = '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5';
+    var folder   = DriveApp.getFolderById(folderId);
+    var exts     = ['.jpg', '.png', '.webp'];
+
+    for (var i = 0; i < exts.length; i++) {
+      var files = folder.getFilesByName('student_' + studentId + exts[i]);
+      if (files.hasNext()) {
+        var file = files.next();
+        return {
+          url:    'https://drive.google.com/thumbnail?id=' + file.getId() + '&sz=w400',
+          fileId: file.getId()
+        };
+      }
+    }
+    return { url: null };
+  } catch(err) {
+    return { error: err.message };
+  }
 }
