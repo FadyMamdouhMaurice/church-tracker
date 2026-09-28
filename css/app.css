@@ -662,3 +662,33 @@ input, select, textarea { font-family: inherit; color: var(--text); }
   background:    white;
   outline:       none;
 }
+
+/* ── Call buttons (direct dial) ──────────────── */
+.call-btn {
+  display:         flex;
+  align-items:     center;
+  gap:             12px;
+  padding:         12px 14px;
+  margin-bottom:   8px;
+  background:      var(--bg);
+  border:          1.5px solid var(--border);
+  border-radius:   var(--radius-sm);
+  text-decoration: none;
+  transition:      background .15s, border-color .15s;
+  cursor:          pointer;
+}
+.call-btn:active        { background: #e8f5e9; border-color: var(--green); }
+.call-btn__label        { font-size: 12px; color: var(--text-2); min-width: 44px; }
+.call-btn__number       { font-size: 15px; font-weight: 700; color: var(--blue); flex: 1; direction: ltr; text-align: left; }
+.call-btn__icon         { font-size: 18px; }
+
+/* ── Logo in login ───────────────────────────── */
+.login-logo__img {
+  width:         80px;
+  height:        80px;
+  border-radius: 50%;
+  object-fit:    cover;
+  margin:        0 auto 10px;
+  display:       block;
+  border:        3px solid var(--blue);
+}

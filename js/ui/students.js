@@ -75,10 +75,8 @@ const StudentsScreen = (() => {
   };
 
   const _quickLog = async (type, id) => {
-    const s = State.getStudentById(id);
-    await DB.write({ type, studentId: id, date: Utils.today(), note: '' });
-    UI.toast(`تم تسجيل ${type === 'call' ? 'المكالمة' : 'الافتقاد'} لـ ${s.name.split(' ')[0]}`);
-    _render();
+    // Call = phone followup → always ask for note
+    await _logWithNote(type, id);
   };
 
   const _logWithNote = async (type, id) => {
