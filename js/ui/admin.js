@@ -439,8 +439,10 @@ const AdminScreen = (() => {
   const _renderLessons = () => {
     const records = State.get('records');
     const weeks   = Array.from({length:8},(_,i)=>Utils.weekKey(-i));
+    const thisWk  = Utils.weekKey();
+    const user    = State.get('user');
 
-    // Per-week: how many servants prepared lesson
+    // Per-week lesson stats from servant-attendance
     const weekStats = weeks.map(w=>{
       const attRecs = records.filter(r=>r.type==='servant-attendance'&&r.week===w);
       const total   = CONFIG.classes.flatMap(c=>c.servants).length;
@@ -452,34 +454,42 @@ const AdminScreen = (() => {
     // Per-servant lesson history
     const allServants = CONFIG.classes.flatMap(c=>c.servants.map(n=>({name:n,cls:c})));
     const servStats = allServants.map(srv=>{
-      const attRecs  = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name);
+      const attRecs    = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name);
       const withLesson = attRecs.filter(r=>r.lesson).length;
-      const total    = attRecs.length;
-      const pct      = total ? Math.round(withLesson/total*100) : null;
+      const total      = attRecs.length;
+      const pct        = total ? Math.round(withLesson/total*100) : null;
       return {...srv, withLesson, total, pct};
     }).sort((a,b)=>(b.pct??-1)-(a.pct??-1));
 
     Utils.html('admin-lessons', `
-      <!-- Drive folder link -->
-      <a href="${CONFIG.drive.lessonFolderUrl}" target="_blank"
-         style="display:flex;align-items:center;gap:10px;background:var(--blue);color:white;
-                border-radius:var(--radius);padding:14px;margin-bottom:14px;text-decoration:none">
-        <span style="font-size:24px">📁</span>
-        <div>
-          <div style="font-weight:700">مجلد الدروس على Drive</div>
-          <div style="font-size:12px;opacity:.8">اضغط لفتح مجلد الدروس الأسبوعية</div>
+      <!-- ① Upload lesson card -->
+      <div class="lesson-upload-card" id="lesson-upload-card">
+        <div class="lesson-upload-card__header">📖 رفع درس هذا الأسبوع</div>
+        <div class="lesson-upload-card__week">${Utils.weekLabel(thisWk)}</div>
+        <input id="lesson-title-inp" type="text" class="lesson-upload-card__input"
+               placeholder="عنوان الدرس (مثال: الأمانة)">
+        <input id="lesson-url-inp"   type="url"  class="lesson-upload-card__input"
+               placeholder="رابط الملف من Google Drive">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <a href="${CONFIG.drive.lessonFolderUrl}" target="_blank" class="lesson-drive-btn">
+            📁 فتح مجلد Drive
+          </a>
+          <button id="lesson-upload-btn" class="lesson-upload-btn">
+            📤 رفع وإشعار الخدام
+          </button>
         </div>
-      </a>
+        <p id="lesson-upload-msg" style="font-size:12px;color:var(--green);margin-top:6px;min-height:18px"></p>
+      </div>
 
-      <!-- Week summary -->
-      <h3 class="section-title">تحضير الدرس بالأسبوع</h3>
+      <!-- ② Week summary -->
+      <h3 class="section-title" style="margin-top:4px">تحضير الدرس بالأسبوع</h3>
       <div class="m-list" style="margin-bottom:16px">
         ${weekStats.filter(w=>w.hasData).map(w=>`
           <div class="m-card">
             <div class="m-card__top">
               <div class="m-card__info">
                 <div class="m-card__name">${Utils.weekLabel(w.w)}</div>
-                <div class="m-card__sub">حضر الاجتماع: ${w.present} | حضّر الدرس: ${w.lesson} من ${w.total}</div>
+                <div class="m-card__sub">حضر: ${w.present} | حضّر الدرس: ${w.lesson} من ${w.total}</div>
               </div>
               <div class="m-card__badge" style="color:${_color(w.total?Math.round(w.lesson/w.total*100):null)}">
                 ${w.total?Math.round(w.lesson/w.total*100)+'%':'—'}
@@ -488,7 +498,7 @@ const AdminScreen = (() => {
           </div>`).join('') || '<p class="bd-empty">لا توجد بيانات بعد</p>'}
       </div>
 
-      <!-- Per-servant -->
+      <!-- ③ Per-servant -->
       <h3 class="section-title">الخدام — تحضير الدرس</h3>
       <div class="m-list">
         ${servStats.map(s=>`
@@ -507,11 +517,48 @@ const AdminScreen = (() => {
             <div class="m-card__chips">
               <span class="m-chip m-chip--blue">📖 ${s.withLesson} مرة</span>
               <span class="m-chip m-chip--muted">من ${s.total} أسبوع</span>
-            </div>`:``}
+            </div>`:''}
           </div>`).join('')}
       </div>
     `);
+
+    // Wire upload button
+    Utils.on('lesson-upload-btn', 'click', async () => {
+      const title = Utils.el('lesson-title-inp')?.value?.trim();
+      const url   = Utils.el('lesson-url-inp')?.value?.trim();
+      const msg   = Utils.el('lesson-upload-msg');
+
+      if (!title) { if(msg) msg.textContent = '⚠️ اكتب عنوان الدرس'; return; }
+      if (!url)   { if(msg) msg.textContent = '⚠️ الصق رابط الدرس من Drive'; return; }
+      if (!url.includes('drive.google.com') && !url.includes('docs.google.com')) {
+        if(msg) msg.textContent = '⚠️ الرابط يجب أن يكون من Google Drive';
+        return;
+      }
+
+      const btn = Utils.el('lesson-upload-btn');
+      btn.disabled    = true;
+      btn.textContent = 'جارٍ الرفع…';
+      if(msg) msg.textContent = '';
+
+      try {
+        await Notifications.uploadLesson({
+          title, driveUrl: url, week: thisWk,
+          by: State.get('user')?.displayName ?? 'أمين الخدمة',
+        });
+        if(msg) msg.textContent = '✅ تم رفع الدرس وإرسال الإشعار للخدام!';
+        if(Utils.el('lesson-title-inp')) Utils.el('lesson-title-inp').value = '';
+        if(Utils.el('lesson-url-inp'))   Utils.el('lesson-url-inp').value   = '';
+        UI.toast('✅ تم رفع الدرس وإشعار الخدام');
+      } catch(e) {
+        if(msg) msg.textContent = '❌ خطأ: ' + e.message;
+      } finally {
+        btn.disabled    = false;
+        btn.textContent = '📤 رفع وإشعار الخدام';
+      }
+    });
   };
+
+
 
   Router.onEnter('admin', _onEnter);
   return { init };
