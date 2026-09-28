@@ -255,13 +255,22 @@ const EditStudentScreen = (() => {
         }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      console.log('[Photo upload] raw response:', text.slice(0, 200));
+
+      let data;
+      try { data = JSON.parse(text); }
+      catch(e) { throw new Error('Response not JSON: ' + text.slice(0, 100)); }
+
       if (data.url) {
         sessionStorage.setItem('photo_' + studentId, data.url);
         _photoFile = null;
-        if (status) status.textContent = '✅ تم رفع الصورة';
+        if (status) status.textContent = '✅ تم رفع الصورة بنجاح!';
+        UI.toast('✅ تم رفع صورة المخدوم');
       } else {
-        if (status) status.textContent = '❌ خطأ في الرفع: ' + (data.error ?? 'غير معروف');
+        const errMsg = data.error ?? JSON.stringify(data);
+        console.error('[Photo upload] error:', errMsg);
+        if (status) status.textContent = '❌ ' + errMsg;
       }
     } catch(e) {
       if (status) status.textContent = '❌ فشل الاتصال';
