@@ -217,27 +217,12 @@ const ProfileScreen = (() => {
     const avatar = Utils.el('profile-avatar');
     if (!avatar) return;
 
-    // Check cache first
+    // Only use cached photo (set after a successful upload this session)
     const cached = sessionStorage.getItem('photo_' + studentId);
     if (cached) {
       _applyPhoto(avatar, cached);
-      return;
     }
-
-    try {
-      const res = await fetch(CONFIG.sheets.scriptUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify({ action: 'getPhoto', studentId }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        sessionStorage.setItem('photo_' + studentId, data.url);
-        _applyPhoto(avatar, data.url);
-      }
-    } catch(e) {
-      // No photo — keep initials
-    }
+    // No network call — photos are shown only after upload
   };
 
   const _applyPhoto = (avatar, url) => {
