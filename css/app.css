@@ -705,3 +705,44 @@ input, select, textarea { font-family: inherit; color: var(--text); }
   border-bottom: 1.5px solid var(--border);
   margin-bottom: 8px;
 }
+
+/* ── Servant attendance buttons ──────────────── */
+.servant-att-row {
+  background:    var(--surface);
+  border-radius: var(--radius);
+  padding:       11px 13px;
+  display:       flex;
+  align-items:   center;
+  gap:           10px;
+  box-shadow:    var(--shadow);
+  margin-bottom: 8px;
+}
+.servant-att-row__info { flex: 1; min-width: 0; }
+.servant-att-row__note {
+  font-size:  11px;
+  color:      var(--orange);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow:   hidden;
+  text-overflow: ellipsis;
+}
+.servant-att-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.s-att-btn {
+  width:         38px;
+  height:        38px;
+  border:        1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background:    var(--bg);
+  font-size:     18px;
+  cursor:        pointer;
+  opacity:       .35;
+  transition:    opacity .15s, border-color .15s, transform .1s;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+}
+.s-att-btn:active          { transform: scale(.92); }
+.s-att-btn.active          { opacity: 1; }
+.s-att-btn--present.active { border-color: var(--green);  background: #f0fff6; }
+.s-att-btn--excused.active { border-color: var(--orange); background: #fff8f0; }
+.s-att-btn--absent.active  { border-color: var(--red);    background: #fff0f0; }

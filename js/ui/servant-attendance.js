@@ -1,12 +1,13 @@
 // ─────────────────────────────────────────────
 //  ui/servant-attendance.js
 //  Weekly attendance for servants (admin only)
+//  States: present | excused (with reason) | absent
 // ─────────────────────────────────────────────
 
 const ServantAttendanceScreen = (() => {
-  let _state = {}; // { servantName: true|false }
+  // _state[name] = { present: true } | { present: false, excused: true, note: '...' } | { present: false, excused: false }
+  let _state = {};
 
-  // All servants flat list from config
   const _allServants = () =>
     CONFIG.classes.flatMap(c =>
       c.servants.map(name => ({ name, className: c.name, classId: c.id }))
@@ -27,56 +28,94 @@ const ServantAttendanceScreen = (() => {
   const _load = () => {
     const wk      = Utils.el('servant-att-week').value;
     const records = State.get('records');
-
     _state = {};
     records
       .filter(r => r.type === 'servant-attendance' && r.week === wk)
-      .forEach(r => { _state[r.servantName] = r.present; });
-
+      .forEach(r => {
+        _state[r.servantName] = {
+          present: r.present,
+          excused: r.excused ?? false,
+          note:    r.note    ?? '',
+        };
+      });
     _render();
   };
 
   const _render = () => {
     const servants = _allServants();
-    const present  = Object.values(_state).filter(Boolean).length;
+    const present  = Object.values(_state).filter(s => s.present).length;
+    const excused  = Object.values(_state).filter(s => !s.present && s.excused).length;
+    const absent   = Object.values(_state).filter(s => !s.present && !s.excused).length;
     const total    = Object.keys(_state).length;
 
-    Utils.el('servant-att-summary').textContent = total
-      ? `تم تسجيل ${total} من ${servants.length} — حضر: ${present} — غاب: ${total - present}`
+    Utils.el('servant-att-summary').innerHTML = total
+      ? `تم تسجيل ${total} من ${servants.length} &nbsp;|&nbsp; ✅ حضر: <b>${present}</b> &nbsp; ⚠️ بعذر: <b>${excused}</b> &nbsp; ❌ غياب: <b>${absent}</b>`
       : 'لم يُسجَّل بعد';
 
-    // Group by class
     const byClass = CONFIG.classes.map(c => ({
       cls:      c,
-      servants: c.servants.map(name => ({ name, classId: c.id })),
+      servants: c.servants.map(name => ({ name })),
     }));
 
     Utils.html('servant-att-list', byClass.map(({ cls, servants }) => `
       <div class="servant-att-class">
         <div class="servant-att-class__title">${cls.name}</div>
-        ${servants.map(s => {
-          const v = _state[s.name];
-          return `<div class="att-row">
-            <div class="att-row__avatar">${s.name[0]}</div>
-            <div class="att-row__name">${s.name}</div>
-            <div class="att-row__btns">
-              <button class="att-btn att-btn--present ${v === true  ? 'att-btn--active' : ''}"
-                      data-name="${s.name}" data-val="true">حضر</button>
-              <button class="att-btn att-btn--absent  ${v === false ? 'att-btn--active' : ''}"
-                      data-name="${s.name}" data-val="false">غاب</button>
-            </div>
-          </div>`;
-        }).join('')}
+        ${servants.map(s => _servantRow(s.name)).join('')}
       </div>`).join(''));
   };
 
-  const _onClick = (e) => {
-    const btn = e.target.closest('.att-btn');
+  const _servantRow = (name) => {
+    const v = _state[name];
+    const isPresent = v?.present === true;
+    const isExcused = v && !v.present && v.excused;
+    const isAbsent  = v && !v.present && !v.excused;
+
+    return `<div class="servant-att-row" data-name="${name}">
+      <div class="att-row__avatar">${name[0]}</div>
+      <div class="servant-att-row__info">
+        <div class="att-row__name">${name}</div>
+        ${isExcused && v.note ? `<div class="servant-att-row__note">📝 ${v.note}</div>` : ''}
+      </div>
+      <div class="servant-att-btns">
+        <button class="s-att-btn s-att-btn--present ${isPresent ? 'active' : ''}"
+                data-name="${name}" data-action="present" title="حضر">✅</button>
+        <button class="s-att-btn s-att-btn--excused ${isExcused ? 'active' : ''}"
+                data-name="${name}" data-action="excused" title="غياب بعذر">⚠️</button>
+        <button class="s-att-btn s-att-btn--absent ${isAbsent ? 'active' : ''}"
+                data-name="${name}" data-action="absent" title="غياب بدون عذر">❌</button>
+      </div>
+    </div>`;
+  };
+
+  const _onClick = async (e) => {
+    const btn = e.target.closest('.s-att-btn');
     if (!btn) return;
-    const name    = btn.dataset.name;
-    const present = btn.dataset.val === 'true';
-    _state[name]  = present;
-    _render();
+
+    const name   = btn.dataset.name;
+    const action = btn.dataset.action;
+
+    if (action === 'present') {
+      _state[name] = { present: true, excused: false, note: '' };
+      _render();
+      return;
+    }
+
+    if (action === 'absent') {
+      _state[name] = { present: false, excused: false, note: '' };
+      _render();
+      return;
+    }
+
+    if (action === 'excused') {
+      // Ask for reason
+      const note = await UI.modal.open({
+        title:       `غياب بعذر: ${name}`,
+        placeholder: 'اكتب سبب الغياب...',
+      });
+      if (note === null) return; // cancelled
+      _state[name] = { present: false, excused: true, note };
+      _render();
+    }
   };
 
   const _save = async () => {
@@ -89,12 +128,14 @@ const ServantAttendanceScreen = (() => {
     btn.disabled    = true;
     ind.textContent = 'جارٍ الحفظ…';
 
-    for (const [name, present] of entries) {
+    for (const [name, val] of entries) {
       await DB.write({
         type:        'servant-attendance',
         week:        wk,
         servantName: name,
-        present,
+        present:     val.present,
+        excused:     val.excused,
+        note:        val.note ?? '',
         date:        wk,
       });
     }
