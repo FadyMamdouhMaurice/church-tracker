@@ -248,22 +248,38 @@ function clearQ(){ls("offQ",[]);}
 
 // ══ FIREBASE ═════════════════════════════════════════════
 function initFB(){
-  if(!firebase.apps.length) firebase.initializeApp(FB);
-  db=firebase.firestore();
-  startListener();
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(FB);
+    db=firebase.firestore();
+    startListener();
+  }catch(e){
+    recs=lg("recs",[]);
+    db=null;
+    var el=document.getElementById("db-status");
+    if(el) el.textContent="🔴 Firebase غير متاح — التطبيق يعمل محلياً";
+    updateStats();
+  }
 }
 function startListener(){
+  if(!db) return;
   if(unsub) unsub();
-  unsub=db.collection("records").orderBy("date","desc").onSnapshot(function(snap){
-    recs=snap.docs.map(function(d){return Object.assign({fsId:d.id},d.data());});
-    ls("recs",recs);
-    updateStats();
-    document.getElementById("db-status").textContent="🟢 Firebase متصل — "+recs.length+" سجل";
-  },function(e){
+  try{
+    unsub=db.collection("records").orderBy("date","desc").onSnapshot(function(snap){
+      recs=snap.docs.map(function(d){return Object.assign({fsId:d.id},d.data());});
+      ls("recs",recs);
+      updateStats();
+      document.getElementById("db-status").textContent="🟢 Firebase متصل — "+recs.length+" سجل";
+    },function(e){
+      recs=lg("recs",[]);
+      var msg="🔴 غير متصل — "+recs.length+" سجل محلي";
+      if(e&&(e.code==="permission-denied"||e.code==="failed-precondition"||e.code==="unimplemented"))
+        msg="🔴 فعّل Firestore من Firebase Console";
+      document.getElementById("db-status").textContent=msg;
+    });
+  }catch(e2){
     recs=lg("recs",[]);
-    var msg=e&&e.code==="permission-denied"?"🔴 فعّل Firestore من Firebase Console":"🔴 غير متصل — "+recs.length+" سجل محلي";
-    document.getElementById("db-status").textContent=msg;
-  });
+    document.getElementById("db-status").textContent="🔴 Firestore غير مفعّل";
+  }
 }
 function getAllRecs(){
   var q=getQ().map(function(r){return Object.assign({pending:true},r);});
