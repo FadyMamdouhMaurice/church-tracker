@@ -53,6 +53,8 @@ const ProfileScreen = (() => {
     const bdSoon  = _isBirthdaySoon(s.birthday);
 
     Utils.el('profile-title').textContent = s.name.split(' ').slice(0, 2).join(' ');
+    // Load photo async (non-blocking)
+    _loadPhoto(s.id);
 
     // Build phones array with labels for call buttons
     const phones = _buildPhones(s);
@@ -65,7 +67,9 @@ const ProfileScreen = (() => {
       ${bdSoon  ? `<div class="alert-banner alert-banner--birthday">🎂 عيد ميلاد قريب! ${bdFormatted}</div>` : ''}
 
       <div class="profile-header">
-        <div class="profile-header__avatar">${Utils.initials(s.name)}</div>
+        <div class="profile-header__avatar" id="profile-avatar" data-initials="${Utils.initials(s.name)}">
+          ${Utils.initials(s.name)}
+        </div>
         <h2 class="profile-header__name">${s.name}</h2>
         <p class="profile-header__class">${cls?.name ?? ''}
           ${s.deacon ? ' <span class="badge badge--purple">شماس</span>' : ''}
@@ -207,6 +211,41 @@ const ProfileScreen = (() => {
     await DB.write({ type, studentId: _currentId, date: Utils.today(), note });
     UI.toast(`✅ تم تسجيل الافتقاد لـ ${s.name.split(' ')[0]}`);
   };
+
+  // ── Load student photo ───────────────────
+  const _loadPhoto = async (studentId) => {
+    const avatar = Utils.el('profile-avatar');
+    if (!avatar) return;
+
+    // Check cache first
+    const cached = sessionStorage.getItem('photo_' + studentId);
+    if (cached) {
+      _applyPhoto(avatar, cached);
+      return;
+    }
+
+    try {
+      const res = await fetch(CONFIG.sheets.scriptUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({ action: 'getPhoto', studentId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        sessionStorage.setItem('photo_' + studentId, data.url);
+        _applyPhoto(avatar, data.url);
+      }
+    } catch(e) {
+      // No photo — keep initials
+    }
+  };
+
+  const _applyPhoto = (avatar, url) => {
+    avatar.innerHTML = `<img src="${url}" class="profile-avatar__img" alt="صورة المخدوم"
+      onerror="this.parentElement.innerHTML=this.parentElement.dataset.initials">`;
+    avatar.classList.add('profile-header__avatar--photo');
+  };
+  // ─────────────────────────────────────────
 
   Router.onEnter('profile', _onEnter);
 
