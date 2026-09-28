@@ -36,8 +36,21 @@ window.addEventListener('load', async () => {
   // 7. Flush any pending offline writes
   const pending = DB.init();
 
-  // 8. Navigate
+  // 8. Init FCM notifications
+  await Notifications.init();
+
+  // 9. Navigate
   Router.go(hasUser ? 'home' : 'login');
+
+  // 10. Request notification permission after short delay (non-blocking)
+  if (hasUser) {
+    setTimeout(() => Notifications.requestPermission(), 3000);
+  }
+
+  // 11. Listen for user login → request permission
+  State.on('userChanged', (user) => {
+    if (user) setTimeout(() => Notifications.requestPermission(), 2000);
+  });
 });
 
 // ── Service Worker ────────────────────────────
