@@ -32,12 +32,13 @@ const HomeScreen = (() => {
 
     // Admin sees class switcher + dashboard button
     const isAdmin = user.role === 'admin';
-    Utils.el('admin-btn-wrap').style.display    = isAdmin ? '' : 'none';
+    Utils.el('admin-btn-wrap').style.display      = isAdmin ? '' : 'none';
     Utils.el('class-switcher-wrap').style.display = isAdmin ? '' : 'none';
 
     if (isAdmin) _buildClassSwitcher();
 
     _renderStats();
+    _renderBirthdayBanner();
   };
 
   const _buildClassSwitcher = () => {
@@ -54,6 +55,79 @@ const HomeScreen = (() => {
       State.setActiveClass(wrap.value === '__admin__' ? '__admin__' : wrap.value);
     };
   };
+
+  // ── Birthday banner ────────────────────────
+  // Shows students whose birthday is this month,
+  // filtered to the servant's own class (admin sees all).
+  const _renderBirthdayBanner = () => {
+    const user     = State.get('user');
+    const students = State.getMyStudents();   // respects active class
+    const now      = new Date();
+    const thisMonth = now.getMonth();  // 0-based
+    const today     = now.getDate();
+
+    // Collect birthdays this month, sorted by day
+    const upcoming = students
+      .filter(s => {
+        if (!s.birthday) return false;
+        const d = new Date(s.birthday + 'T00:00:00');
+        return !isNaN(d) && d.getMonth() === thisMonth;
+      })
+      .map(s => {
+        const d   = new Date(s.birthday + 'T00:00:00');
+        const day = d.getDate();
+        const cls = State.getClassById(s.cls);
+        return { name: s.name, day, clsName: cls?.name ?? '' };
+      })
+      .sort((a, b) => a.day - b.day);
+
+    // Ensure container exists (injected once after home-stats)
+    let banner = Utils.el('home-birthday-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'home-birthday-banner';
+      const stats = Utils.el('home-stats');
+      stats?.insertAdjacentElement('afterend', banner);
+    }
+
+    if (upcoming.length === 0) {
+      banner.innerHTML = '';
+      return;
+    }
+
+    const isAdmin = user?.role === 'admin';
+
+    const rows = upcoming.map(b => {
+      const isToday = b.day === today;
+      const isPast  = b.day < today;
+      const tag     = isToday
+        ? '<span class="bd-tag bd-tag--today">🎉 اليوم</span>'
+        : isPast
+          ? '<span class="bd-tag bd-tag--past">مضى</span>'
+          : `<span class="bd-tag">يوم ${b.day}</span>`;
+
+      return `
+        <div class="bd-row ${isToday ? 'bd-row--today' : ''}">
+          <span class="bd-row__name">${b.name.split(' ').slice(0, 2).join(' ')}</span>
+          ${isAdmin ? `<span class="bd-row__cls">${b.clsName}</span>` : ''}
+          ${tag}
+        </div>`;
+    }).join('');
+
+    const monthName = now.toLocaleDateString('ar-EG', { month: 'long' });
+
+    banner.innerHTML = `
+      <div class="birthday-card">
+        <div class="birthday-card__header">
+          🎂 أعياد ميلاد ${monthName}
+          <span class="birthday-card__count">${upcoming.length}</span>
+        </div>
+        <div class="birthday-card__list">
+          ${rows}
+        </div>
+      </div>`;
+  };
+  // ──────────────────────────────────────────
 
   const _renderStats = () => {
     const students  = State.getMyStudents();
