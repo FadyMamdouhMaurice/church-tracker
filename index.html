@@ -91,63 +91,73 @@
     <button id="logout-btn" class="topbar__btn">خروج</button>
   </div>
 
-  <div class="content">
-    <div class="welcome-card">
-      <div class="welcome-card__cross">✝</div>
-      <div class="welcome-card__name">أهلاً، <span id="home-servant-name"></span></div>
-      <div class="welcome-card__sub">دفعة الأنبا موسى الأسود — إعدادي</div>
-      <div id="home-week-badge" class="welcome-card__badge"></div>
+  <div class="content home-content">
+
+    <!-- Welcome + stats row -->
+    <div class="home-top">
+      <div class="welcome-card">
+        <div class="welcome-card__cross">✝</div>
+        <div class="welcome-card__name">أهلاً، <span id="home-servant-name"></span></div>
+        <div class="welcome-card__sub">دفعة الأنبا موسى الأسود — إعدادي</div>
+        <div id="home-week-badge" class="welcome-card__badge"></div>
+      </div>
+      <div id="home-stats" class="stats-grid stats-grid--3"></div>
     </div>
 
-    <div id="home-stats" class="stats-grid stats-grid--3"></div>
+    <!-- Birthday banner (injected by JS) -->
+    <div id="home-birthday-banner"></div>
 
+    <!-- Main actions -->
     <h2 class="section-title">الخدمات</h2>
-    <div class="menu-grid">
-      <div id="btn-att"     class="menu-card menu-card--att">
-        <div class="menu-card__icon">📋</div>
-        <div class="menu-card__label">تسجيل الحضور</div>
-        <div class="menu-card__sub">الأسبوع الحالي</div>
+    <div class="home-actions-grid">
+      <div id="btn-att" class="home-action-card home-action-card--att">
+        <div class="home-action-card__icon">📋</div>
+        <div class="home-action-card__label">تسجيل الحضور</div>
+        <div class="home-action-card__sub">الأسبوع الحالي</div>
       </div>
-      <div id="btn-call"    class="menu-card menu-card--call">
-        <div class="menu-card__icon">📞</div>
-        <div class="menu-card__label">تسجيل مكالمة</div>
-        <div class="menu-card__sub">مكالمة أسبوعية</div>
+      <div id="btn-call" class="home-action-card home-action-card--call">
+        <div class="home-action-card__icon">📞</div>
+        <div class="home-action-card__label">تسجيل مكالمة</div>
+        <div class="home-action-card__sub">مكالمة أسبوعية</div>
       </div>
-      <div id="btn-visit"   class="menu-card menu-card--visit">
-        <div class="menu-card__icon">🏠</div>
-        <div class="menu-card__label">تسجيل افتقاد</div>
-        <div class="menu-card__sub">زيارة بيتية</div>
+      <div id="btn-visit" class="home-action-card home-action-card--visit">
+        <div class="home-action-card__icon">🏠</div>
+        <div class="home-action-card__label">تسجيل افتقاد</div>
+        <div class="home-action-card__sub">زيارة بيتية</div>
       </div>
-      <div id="btn-profile" class="menu-card menu-card--profile">
-        <div class="menu-card__icon">👦</div>
-        <div class="menu-card__label">ملفات الأولاد</div>
-        <div class="menu-card__sub">بيانات وتاريخ</div>
+      <div id="btn-profile" class="home-action-card home-action-card--profile">
+        <div class="home-action-card__icon">👦</div>
+        <div class="home-action-card__label">ملفات الأولاد</div>
+        <div class="home-action-card__sub">بيانات وتاريخ</div>
       </div>
     </div>
 
+    <!-- Admin-only buttons -->
     <div id="admin-btn-wrap" style="display:none">
-      <div id="btn-admin" class="menu-card menu-card--admin">
-        <div class="menu-card__icon">📊</div>
-        <div>
-          <div class="menu-card__label">لوحة أمين الخدمة</div>
-          <div class="menu-card__sub">كل الفصول — تقارير شاملة</div>
+      <div class="home-admin-grid">
+        <div id="btn-admin" class="home-admin-card">
+          <div class="home-admin-card__icon">📊</div>
+          <div>
+            <div class="home-admin-card__label">لوحة أمين الخدمة</div>
+            <div class="home-admin-card__sub">كل الفصول — تقارير شاملة</div>
+          </div>
         </div>
-      </div>
-      <div id="btn-servant-att" class="menu-card menu-card--admin" style="margin-top:8px;background:#0f6e56">
-        <div class="menu-card__icon">🧑‍💼</div>
-        <div>
-          <div class="menu-card__label">حضور الخدام</div>
-          <div class="menu-card__sub">تسجيل حضور وغياب الخدام أسبوعياً</div>
+        <div id="btn-servant-att" class="home-admin-card home-admin-card--green">
+          <div class="home-admin-card__icon">🧑‍💼</div>
+          <div>
+            <div class="home-admin-card__label">حضور الخدام</div>
+            <div class="home-admin-card__sub">تسجيل حضور وغياب أسبوعياً</div>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Class switcher -->
     <div id="class-switcher-wrap" class="form-group" style="display:none;margin-top:8px">
-      <label style="font-size:13px;color:var(--text-2);font-weight:600;display:block;margin-bottom:6px">
-        عرض فصل:
-      </label>
+      <label style="font-size:13px;color:var(--text-2);font-weight:600;display:block;margin-bottom:6px">عرض فصل:</label>
       <select id="class-switcher" class="class-switcher-sel"></select>
     </div>
+
     <p id="db-status" class="db-status"></p>
   </div>
 </div>
