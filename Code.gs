@@ -4,12 +4,15 @@
 // ─────────────────────────────────────────────
 
 var SHEET_ID   = '1nChuW3S20fCre9fL7N935EbTfG7AvwQVlCvB4o06TTY';
-var SKIP_TABS  = ['سجل الحضور','سجل المكالمات','سجل الافتقاد','إعدادات'];
+var SKIP_TABS  = ['سجل الحضور','سجل المكالمات','سجل الافتقاد','سجل متنوع','إعدادات'];
 
 // ── Column indices (0-based) ──────────────────
+// A=0  B=1(الفصل القديم)  C=2(الفصل الجديد)  D=3  E=4  F=5  G=6  H=7 ...
 var COL = {
   name:       0,   // A — اسم الطفل
-  birthday:   3,   // D — تاريخ الميلاد  ← NEW
+  oldClass:   1,   // B — الفصل القديم   (read-only)
+  newClass:   2,   // C — الفصل الجديد  (read-only)
+  birthday:   3,   // D — تاريخ الميلاد
   address:    4,   // E — العنوان
   phoneChild: 5,   // F — تليفون المخدوم
   phoneMom:   6,   // G — تليفون الأم
@@ -54,7 +57,7 @@ function getStudents() {
 
       var rows = sheet.getDataRange().getValues();
       for (var i = 1; i < rows.length; i++) {
-        var r    = rows[i];
+        var r     = rows[i];
         var sName = String(r[COL.name] || '').trim();
         if (!sName) continue;
 
@@ -62,7 +65,7 @@ function getStudents() {
           id:        id++,
           cls:       classId,
           name:      sName,
-          birthday:  cleanDate(r[COL.birthday]),   // ← NEW
+          birthday:  cleanDate(r[COL.birthday]),
           address:   clean(r[COL.address]),
           phones: {
             child:   extractPhone(r[COL.phoneChild]),
@@ -116,6 +119,47 @@ function saveRecord(rec) {
   }
 }
 
+// ── Update a student row in the Sheet ─────────
+function updateStudentRow(s) {
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var cls   = s.cls ? s.cls.replace(/_/g, ' ') : '';
+    var sheet = ss.getSheetByName(cls);
+    if (!sheet) return { error: 'Sheet not found: ' + cls };
+
+    var rows     = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+
+    // Find row by matching student name (row 0 = header)
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][COL.name]).trim() === String(s.name).trim()) {
+        rowIndex = i + 1; // 1-based for Sheets API
+        break;
+      }
+    }
+
+    if (rowIndex === -1) return { error: 'Student not found: ' + s.name };
+
+    var phones = s.phones || {};
+
+    // Update only editable columns (skip A/B/C/D which are name, old class, new class, birthday)
+    sheet.getRange(rowIndex, COL.address    + 1).setValue(s.address    || '');
+    sheet.getRange(rowIndex, COL.phoneChild + 1).setValue(phones.child || '');
+    sheet.getRange(rowIndex, COL.phoneMom   + 1).setValue(phones.mom   || '');
+    sheet.getRange(rowIndex, COL.phoneDad   + 1).setValue(phones.dad   || '');
+    sheet.getRange(rowIndex, COL.school     + 1).setValue(s.school     || '');
+    sheet.getRange(rowIndex, COL.jobDad     + 1).setValue(s.jobDad     || '');
+    sheet.getRange(rowIndex, COL.jobMom     + 1).setValue(s.jobMom     || '');
+    sheet.getRange(rowIndex, COL.deacon     + 1).setValue(s.deacon     ? 'TRUE' : 'FALSE');
+    sheet.getRange(rowIndex, COL.confessor  + 1).setValue(s.confessor  || '');
+    sheet.getRange(rowIndex, COL.notes      + 1).setValue(s.notes      || '');
+
+    return { status: 'updated', row: rowIndex };
+  } catch(err) {
+    return { error: err.message };
+  }
+}
+
 // ── Helpers ───────────────────────────────────
 function nameToId(n) {
   return n.trim().replace(/\s+/g,'_').replace(/[^\u0600-\u06FFa-zA-Z0-9_]/g,'').substring(0,40);
@@ -129,7 +173,6 @@ function clean(v) {
 // Normalise birthday cell → 'YYYY-MM-DD' or ''
 function cleanDate(v) {
   if (!v) return '';
-  // If Sheets returned a JS Date object
   if (v instanceof Date && !isNaN(v)) {
     var y = v.getFullYear();
     var m = String(v.getMonth()+1).padStart(2,'0');
@@ -138,21 +181,19 @@ function cleanDate(v) {
   }
   var s = String(v).trim();
   if (!s) return '';
-  // Try DD/MM/YYYY or D/M/YYYY
-  var dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  // DD/MM/YYYY or D/M/YYYY or DD-MM-YYYY or DD\\MM\\YYYY
+  var dmy = s.match(/^(\d{1,2})[\/\-\\](\d{1,2})[\/\-\\](\d{4})$/);
   if (dmy) return dmy[3] + '-' + dmy[2].padStart(2,'0') + '-' + dmy[1].padStart(2,'0');
-  // Try YYYY-MM-DD already
-  var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (iso) return s;
+  // YYYY-MM-DD already
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   return '';
 }
 
 function extractPhone(cell) {
   if (!cell) return '';
   var s = String(cell).trim();
-  if (/^[\-_\u0640\s\u0600-\u06FF]+$/.test(s)) return ''; // dashes or Arabic only
+  if (/^[\-_\u0640\s\u0600-\u06FF]+$/.test(s)) return '';
   try { var n = parseFloat(s); if (!isNaN(n) && isFinite(n)) s = String(Math.round(n)); } catch(e){}
-  // Take first phone-like sequence
   var match = s.match(/0[1-9]\d{8,9}/);
   if (match) return match[0];
   var c = s.replace(/[^\d]/g,'');
@@ -167,45 +208,4 @@ function buildResponse(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
-}
-
-// ── Update a student row in the Sheet ────────
-function updateStudentRow(s) {
-  try {
-    var ss     = SpreadsheetApp.openById(SHEET_ID);
-    var cls    = s.cls ? s.cls.replace(/_/g, ' ') : '';
-    var sheet  = ss.getSheetByName(cls);
-    if (!sheet) return { error: 'Sheet not found: ' + cls };
-
-    var rows = sheet.getDataRange().getValues();
-    var rowIndex = -1;
-
-    // Find row by matching student name (row 0 = header)
-    for (var i = 1; i < rows.length; i++) {
-      if (String(rows[i][0]).trim() === String(s.name).trim()) {
-        rowIndex = i + 1; // 1-based for Sheets API
-        break;
-      }
-    }
-
-    if (rowIndex === -1) return { error: 'Student not found: ' + s.name };
-
-    var phones = s.phones || {};
-
-    // Update all editable columns (birthday not editable from app — edit in Sheet)
-    sheet.getRange(rowIndex, COL.address   + 1).setValue(s.address   || '');
-    sheet.getRange(rowIndex, COL.phoneChild + 1).setValue(phones.child || '');
-    sheet.getRange(rowIndex, COL.phoneMom  + 1).setValue(phones.mom   || '');
-    sheet.getRange(rowIndex, COL.phoneDad  + 1).setValue(phones.dad   || '');
-    sheet.getRange(rowIndex, COL.school    + 1).setValue(s.school     || '');
-    sheet.getRange(rowIndex, COL.jobDad    + 1).setValue(s.jobDad     || '');
-    sheet.getRange(rowIndex, COL.jobMom    + 1).setValue(s.jobMom     || '');
-    sheet.getRange(rowIndex, COL.deacon    + 1).setValue(s.deacon     ? 'TRUE' : 'FALSE');
-    sheet.getRange(rowIndex, COL.confessor + 1).setValue(s.confessor  || '');
-    sheet.getRange(rowIndex, COL.notes     + 1).setValue(s.notes      || '');
-
-    return { status: 'updated', row: rowIndex };
-  } catch(err) {
-    return { error: err.message };
-  }
 }
