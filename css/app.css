@@ -837,3 +837,12 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 }
 .lesson-upload-btn:disabled { opacity: .6; cursor: default; }
 .lesson-upload-btn:active   { opacity: .85; }
+
+/* ── Mass attendance — present highlight ─────── */
+.att-row--present {
+  background: #f0fff6;
+  border-right: 3px solid var(--green);
+}
+.att-row__avatar--present {
+  background: var(--green);
+}
