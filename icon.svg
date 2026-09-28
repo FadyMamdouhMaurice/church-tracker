@@ -1,8 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#1a3a6b"/>
-  <!-- Cross -->
-  <rect x="224" y="80"  width="64" height="352" fill="white"/>
-  <rect x="112" y="176" width="288" height="64"  fill="white"/>
-  <!-- Small circle at center -->
-  <circle cx="256" cy="256" r="24" fill="#1a3a6b"/>
+  <rect width="512" height="512" rx="96" fill="#1a3a6b"/>
+  <rect x="220" y="80"  width="72" height="352" rx="12" fill="white"/>
+  <rect x="100" y="180" width="312" height="72"  rx="12" fill="white"/>
 </svg>
