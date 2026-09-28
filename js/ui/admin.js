@@ -13,6 +13,8 @@ const AdminScreen = (() => {
     Utils.on('tab-followup',       'click', () => _switchTab('followup'));
     Utils.on('tab-servants',       'click', () => _switchTab('servants'));
     Utils.on('tab-birthdays',      'click', () => _switchTab('birthdays'));
+    Utils.on('tab-mass',           'click', () => _switchTab('mass'));
+    Utils.on('tab-lessons',        'click', () => _switchTab('lessons'));
     Utils.on('admin-class-filter', 'change', _onFilterChange);
     Utils.on('export-csv-btn',     'click', () => Sheets.exportCSV());
   };
@@ -44,10 +46,10 @@ const AdminScreen = (() => {
     _activeTab = tab;
     const tabBtnId  = { overview:'tab-overview', attendance:'tab-att',
                         followup:'tab-followup',  servants:'tab-servants',
-                        birthdays:'tab-birthdays' };
+                        birthdays:'tab-birthdays', mass:'tab-mass', lessons:'tab-lessons' };
     const contentId = { overview:'admin-overview', attendance:'admin-attendance',
                         followup:'admin-followup',  servants:'admin-servants',
-                        birthdays:'admin-birthdays' };
+                        birthdays:'admin-birthdays', mass:'admin-mass', lessons:'admin-lessons' };
     Object.keys(tabBtnId).forEach(t => {
       Utils.el(tabBtnId[t])?.classList.toggle('active', t === tab);
       Utils.el(contentId[t])?.style.setProperty('display', t === tab ? '' : 'none');
@@ -58,7 +60,7 @@ const AdminScreen = (() => {
   const _renderTab = (tab) => {
     ({ overview:_renderOverview, attendance:_renderAttendance,
        followup:_renderFollowup, servants:_renderServants,
-       birthdays:_renderBirthdays })[tab]?.();
+       birthdays:_renderBirthdays, mass:_renderMass, lessons:_renderLessons })[tab]?.();
   };
 
   // ── helpers ───────────────────────────────
@@ -348,6 +350,167 @@ const AdminScreen = (() => {
       const c=e.target.closest('[data-id]');
       if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
     });
+  };
+
+
+  // ── Mass attendance report ────────────────
+  const _renderMass = () => {
+    const records  = State.get('records');
+    const students = _filteredStudents();
+    const weeks    = Array.from({length:6},(_,i)=>{
+      const d = new Date(); d.setDate(d.getDate() - (d.getDay()>=5?d.getDay()-5:d.getDay()+2) - i*7);
+      return d.toISOString().split('T')[0];
+    });
+    const massRecs = records.filter(r=>r.type==='mass-attendance');
+
+    // Student mass attendance
+    const studRows = students.map(s=>{
+      const data    = weeks.map(w=>massRecs.find(r=>r.studentId===s.id&&r.week===w));
+      const rec     = data.filter(Boolean).length;
+      const present = data.filter(d=>d?.present).length;
+      const pct     = rec ? Math.round(present/rec*100) : null;
+      return {s,data,pct};
+    }).sort((a,b)=>(a.pct??-1)-(b.pct??-1));
+
+    // Servant mass attendance
+    const allServants = _filterClass==='__all__'
+      ? CONFIG.classes.flatMap(c=>c.servants.map(n=>({name:n,cls:c})))
+      : CONFIG.classes.filter(c=>c.id===_filterClass).flatMap(c=>c.servants.map(n=>({name:n,cls:c})));
+
+    const servRows = allServants.map(srv=>{
+      const data    = weeks.map(w=>massRecs.find(r=>r.servantName===srv.name&&r.week===w));
+      const rec     = data.filter(Boolean).length;
+      const present = data.filter(d=>d?.present).length;
+      const pct     = rec ? Math.round(present/rec*100) : null;
+      return {srv,data,pct};
+    }).sort((a,b)=>(a.pct??-1)-(b.pct??-1));
+
+    Utils.html('admin-mass', `
+      <h3 class="section-title" style="margin-bottom:8px">👦 حضور المخدومين</h3>
+      <div class="m-list">
+        ${studRows.map(({s,data,pct})=>`
+          <div class="m-card ${pct!==null&&pct<50?'m-card--alert':''}" data-id="${s.id}">
+            <div class="m-card__top">
+              <div class="m-card__avatar">${Utils.initials(s.name)}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${s.name.split(' ').slice(0,2).join(' ')}</div>
+                ${_filterClass==='__all__'?`<div class="m-card__sub">${_clsShort(s)}</div>`:''}
+              </div>
+              <div class="m-card__badge" style="color:${_color(pct)}">${pct===null?'—':pct+'%'}</div>
+            </div>
+            <div class="m-card__weeks">
+              ${data.slice(0,6).map((d,i)=>`
+                <div class="m-week-dot">
+                  <span>${d?(d.present?'✅':'❌'):'—'}</span>
+                  <span class="m-week-dot__label">${weeks[i].slice(5,10)}</span>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+      <h3 class="section-title" style="margin-bottom:8px;margin-top:16px">🧑‍💼 حضور الخدام</h3>
+      <div class="m-list">
+        ${servRows.map(({srv,data,pct})=>`
+          <div class="m-card ${pct!==null&&pct<50?'m-card--alert':''}">
+            <div class="m-card__top">
+              <div class="m-card__avatar m-card__avatar--servant">${srv.name[0]}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${srv.name}</div>
+                ${_filterClass==='__all__'?`<div class="m-card__sub">${srv.cls.name.replace('فصل','').trim()}</div>`:''}
+              </div>
+              <div class="m-card__badge" style="color:${_color(pct)}">${pct===null?'—':pct+'%'}</div>
+            </div>
+            <div class="m-card__weeks">
+              ${data.slice(0,6).map((d,i)=>`
+                <div class="m-week-dot">
+                  <span>${d?(d.present?'✅':'❌'):'—'}</span>
+                  <span class="m-week-dot__label">${weeks[i].slice(5,10)}</span>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>
+    `);
+    Utils.el('admin-mass')?.addEventListener('click',e=>{
+      const c=e.target.closest('[data-id]');
+      if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
+    });
+  };
+
+  // ── Lessons dashboard ─────────────────────
+  const _renderLessons = () => {
+    const records = State.get('records');
+    const weeks   = Array.from({length:8},(_,i)=>Utils.weekKey(-i));
+
+    // Per-week: how many servants prepared lesson
+    const weekStats = weeks.map(w=>{
+      const attRecs = records.filter(r=>r.type==='servant-attendance'&&r.week===w);
+      const total   = CONFIG.classes.flatMap(c=>c.servants).length;
+      const present = attRecs.filter(r=>r.present).length;
+      const lesson  = attRecs.filter(r=>r.lesson).length;
+      return {w, total, present, lesson, hasData:attRecs.length>0};
+    });
+
+    // Per-servant lesson history
+    const allServants = CONFIG.classes.flatMap(c=>c.servants.map(n=>({name:n,cls:c})));
+    const servStats = allServants.map(srv=>{
+      const attRecs  = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name);
+      const withLesson = attRecs.filter(r=>r.lesson).length;
+      const total    = attRecs.length;
+      const pct      = total ? Math.round(withLesson/total*100) : null;
+      return {...srv, withLesson, total, pct};
+    }).sort((a,b)=>(b.pct??-1)-(a.pct??-1));
+
+    Utils.html('admin-lessons', `
+      <!-- Drive folder link -->
+      <a href="${CONFIG.drive.lessonFolderUrl}" target="_blank"
+         style="display:flex;align-items:center;gap:10px;background:var(--blue);color:white;
+                border-radius:var(--radius);padding:14px;margin-bottom:14px;text-decoration:none">
+        <span style="font-size:24px">📁</span>
+        <div>
+          <div style="font-weight:700">مجلد الدروس على Drive</div>
+          <div style="font-size:12px;opacity:.8">اضغط لفتح مجلد الدروس الأسبوعية</div>
+        </div>
+      </a>
+
+      <!-- Week summary -->
+      <h3 class="section-title">تحضير الدرس بالأسبوع</h3>
+      <div class="m-list" style="margin-bottom:16px">
+        ${weekStats.filter(w=>w.hasData).map(w=>`
+          <div class="m-card">
+            <div class="m-card__top">
+              <div class="m-card__info">
+                <div class="m-card__name">${Utils.weekLabel(w.w)}</div>
+                <div class="m-card__sub">حضر الاجتماع: ${w.present} | حضّر الدرس: ${w.lesson} من ${w.total}</div>
+              </div>
+              <div class="m-card__badge" style="color:${_color(w.total?Math.round(w.lesson/w.total*100):null)}">
+                ${w.total?Math.round(w.lesson/w.total*100)+'%':'—'}
+              </div>
+            </div>
+          </div>`).join('') || '<p class="bd-empty">لا توجد بيانات بعد</p>'}
+      </div>
+
+      <!-- Per-servant -->
+      <h3 class="section-title">الخدام — تحضير الدرس</h3>
+      <div class="m-list">
+        ${servStats.map(s=>`
+          <div class="m-card ${s.pct!==null&&s.pct<50?'m-card--alert':''}">
+            <div class="m-card__top">
+              <div class="m-card__avatar m-card__avatar--servant">${s.name[0]}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${s.name}</div>
+                <div class="m-card__sub">${s.cls.name.replace('فصل','').trim()}</div>
+              </div>
+              <div class="m-card__badge" style="color:${_color(s.pct)}">
+                ${s.pct===null?'—':s.pct+'%'}
+              </div>
+            </div>
+            ${s.total>0?`
+            <div class="m-card__chips">
+              <span class="m-chip m-chip--blue">📖 ${s.withLesson} مرة</span>
+              <span class="m-chip m-chip--muted">من ${s.total} أسبوع</span>
+            </div>`:``}
+          </div>`).join('')}
+      </div>
+    `);
   };
 
   Router.onEnter('admin', _onEnter);
