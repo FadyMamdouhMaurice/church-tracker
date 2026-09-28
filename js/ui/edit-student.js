@@ -5,7 +5,9 @@
 // ─────────────────────────────────────────────
 
 const EditStudentScreen = (() => {
-  let _studentId = null;
+  let _studentId  = null;
+  let _photoFile  = null;   // selected File object
+  let _photoUrl   = null;   // current photo URL from Drive
 
   const init = () => {
     Utils.on('edit-back',     'click', () => Router.back());
@@ -29,7 +31,31 @@ const EditStudentScreen = (() => {
     // phones — support both object and array format
     const phones = _getPhones(s);
 
+    // Load current photo first
+    _loadCurrentPhoto(s.id);
+
     Utils.html('edit-form', `
+      <!-- ① Photo section -->
+      <div class="edit-section photo-upload-section">
+        <div class="edit-section__title">📷 صورة المخدوم</div>
+        <div class="photo-upload-area" id="photo-upload-area">
+          <div class="photo-upload-preview" id="photo-preview">
+            <div class="photo-upload-initials" id="photo-initials">${Utils.initials(s.name)}</div>
+          </div>
+          <div class="photo-upload-btns">
+            <label class="photo-upload-btn photo-upload-btn--camera" for="photo-input-camera">
+              📷 كاميرا
+            </label>
+            <label class="photo-upload-btn photo-upload-btn--gallery" for="photo-input-gallery">
+              🖼️ معرض
+            </label>
+          </div>
+          <input id="photo-input-camera"  type="file" accept="image/*" capture="environment" style="display:none">
+          <input id="photo-input-gallery" type="file" accept="image/*" style="display:none">
+          <p id="photo-status" class="photo-upload-status"></p>
+        </div>
+      </div>
+
       <div class="edit-section">
         <div class="edit-section__title">👦 بيانات الولد</div>
 
@@ -72,6 +98,10 @@ const EditStudentScreen = (() => {
 
     // Show last edit info if exists
     _showLastEdit(s);
+
+    // Wire photo inputs
+    Utils.el('photo-input-camera')?.addEventListener('change',  e => _onPhotoSelected(e));
+    Utils.el('photo-input-gallery')?.addEventListener('change', e => _onPhotoSelected(e));
 
     // Toggle label for deacon checkbox
     Utils.el('field-deacon')?.addEventListener('change', function() {
@@ -154,7 +184,12 @@ const EditStudentScreen = (() => {
       note:      `تعديل بيانات: ${updated.name}`,
     });
 
-    // 3. Sync to Google Sheets
+    // 3. Upload photo if selected
+    if (_photoFile) {
+      await _uploadPhoto(s.id);
+    }
+
+    // 4. Sync to Google Sheets
     Sheets.syncStudentEdit(updated);
 
     btn.disabled    = false;
@@ -167,6 +202,80 @@ const EditStudentScreen = (() => {
     const el = Utils.el(`field-${id}`);
     return el ? el.value.trim() : '';
   };
+
+  // ── Photo helpers ─────────────────────────
+  const _loadCurrentPhoto = async (studentId) => {
+    const cached = sessionStorage.getItem('photo_' + studentId);
+    if (cached) { _showPreview(cached); return; }
+    try {
+      const res  = await fetch(CONFIG.sheets.scriptUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({ action: 'getPhoto', studentId }),
+      });
+      const data = await res.json();
+      if (data.url) { _photoUrl = data.url; _showPreview(data.url); }
+    } catch(e) {}
+  };
+
+  const _onPhotoSelected = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { UI.toast('الصورة أكبر من 5MB — اختار صورة أصغر'); return; }
+    _photoFile = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => _showPreview(ev.target.result);
+    reader.readAsDataURL(file);
+    Utils.el('photo-status').textContent = '📷 صورة جديدة — ستُرفع عند الحفظ';
+  };
+
+  const _showPreview = (src) => {
+    const preview = Utils.el('photo-preview');
+    if (!preview) return;
+    preview.innerHTML = `<img src="${src}" class="photo-preview__img"
+      onerror="this.parentElement.innerHTML='<div class=\"photo-upload-initials\">?</div>'">`;
+  };
+
+  const _uploadPhoto = async (studentId) => {
+    if (!_photoFile) return;
+    const status = Utils.el('photo-status');
+    if (status) status.textContent = '⏫ جارٍ رفع الصورة...';
+
+    try {
+      // Convert file to base64
+      const base64 = await new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload  = (e) => res(e.target.result.split(',')[1]);
+        reader.onerror = rej;
+        reader.readAsDataURL(_photoFile);
+      });
+
+      const response = await fetch(CONFIG.sheets.scriptUrl, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({
+          action:     'uploadPhoto',
+          studentId,
+          base64Data: base64,
+          mimeType:   _photoFile.type || 'image/jpeg',
+          fileName:   `student_${studentId}.jpg`,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        sessionStorage.setItem('photo_' + studentId, data.url);
+        _photoFile = null;
+        if (status) status.textContent = '✅ تم رفع الصورة';
+      } else {
+        if (status) status.textContent = '❌ خطأ في الرفع: ' + (data.error ?? 'غير معروف');
+      }
+    } catch(e) {
+      if (status) status.textContent = '❌ فشل الاتصال';
+      console.warn('[Photo upload]', e);
+    }
+  };
+  // ─────────────────────────────────────────
 
   Router.onEnter('edit', _onEnter);
 
