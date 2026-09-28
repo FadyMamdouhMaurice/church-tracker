@@ -109,7 +109,7 @@
 
     <!-- Main actions -->
     <h2 class="section-title">الخدمات</h2>
-    <div class="home-actions-grid">
+    <div class="home-actions-grid has-5">
       <div id="btn-att" class="home-action-card home-action-card--att">
         <div class="home-action-card__icon">📋</div>
         <div class="home-action-card__label">تسجيل الحضور</div>
@@ -129,6 +129,11 @@
         <div class="home-action-card__icon">👦</div>
         <div class="home-action-card__label">ملفات الأولاد</div>
         <div class="home-action-card__sub">بيانات وتاريخ</div>
+      </div>
+          <div id="btn-mass" class="home-action-card home-action-card--mass">
+        <div class="home-action-card__icon">⛪</div>
+        <div class="home-action-card__label">حضور القداس</div>
+        <div class="home-action-card__sub">كل جمعة</div>
       </div>
     </div>
 
@@ -254,13 +259,43 @@
       <button id="tab-followup"  class="tab"        role="tab">المتابعة</button>
       <button id="tab-servants"  class="tab"        role="tab">الخدام</button>
       <button id="tab-birthdays" class="tab"        role="tab">🎂 الميلاد</button>
+      <button id="tab-mass"      class="tab"        role="tab">⛪ القداس</button>
+      <button id="tab-lessons"   class="tab"        role="tab">📖 الدروس</button>
     </div>
     <div id="admin-overview"></div>
     <div id="admin-attendance" style="display:none"></div>
     <div id="admin-followup"   style="display:none"></div>
     <div id="admin-servants"   style="display:none"></div>
     <div id="admin-birthdays"  style="display:none"></div>
+    <div id="admin-mass"       style="display:none"></div>
+    <div id="admin-lessons"    style="display:none"></div>
   </div>
+</div>
+
+
+<!-- ═══ MASS ATTENDANCE ══════════════════════════════════ -->
+<div id="mass-screen" class="screen">
+  <div class="topbar">
+    <button id="mass-back" class="topbar__back">→</button>
+    <h1 class="topbar__title">حضور القداس</h1>
+    <div id="mass-saving" style="font-size:12px;opacity:.8;color:white"></div>
+  </div>
+  <div class="content">
+    <div class="week-selector">
+      <span class="week-selector__label">الجمعة:</span>
+      <select id="mass-week-sel"></select>
+    </div>
+    <p id="mass-summary" class="att-summary">لم يُسجَّل بعد</p>
+    <!-- Tab bar: students / servants -->
+    <div class="tab-bar" style="margin-bottom:12px" role="tablist">
+      <button id="mass-tab-students" class="tab active" role="tab">👦 المخدومين</button>
+      <button id="mass-tab-servants" class="tab"        role="tab">🧑‍💼 الخدام</button>
+    </div>
+    <div id="mass-students-list" class="att-list"></div>
+    <div id="mass-servants-list" class="att-list" style="display:none"></div>
+    <div style="height:90px"></div>
+  </div>
+  <button id="mass-save-btn" class="save-fab">💾 حفظ الحضور</button>
 </div>
 
 <!-- ═══ SCRIPTS ═══════════════════════════════════════════ -->
@@ -283,6 +318,7 @@
 <script src="js/ui/profile.js"></script>
 <script src="js/ui/admin.js"></script>
 <script src="js/ui/servant-attendance.js"></script>
+<script src="js/ui/mass-attendance.js"></script>
 <script src="js/ui/edit-student.js"></script>
 <script src="js/updater.js"></script>
 <script src="js/main.js"></script>
