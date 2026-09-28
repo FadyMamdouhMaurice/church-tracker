@@ -216,12 +216,13 @@ const AdminScreen = (() => {
       const att      = mine.filter(r=>r.type==='attendance').length;
       const call     = mine.filter(r=>r.type==='call').length;
       const vis      = mine.filter(r=>r.type==='visit').length;
+      const lesson   = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name&&r.lesson).length;
       const last     = [...mine].sort((a,b)=>b.date.localeCompare(a.date))[0];
       const sAtt     = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name);
       const sPresent = sAtt.filter(r=>r.present).length;
       const sExcused = sAtt.filter(r=>!r.present&&r.excused).length;
       const sPct     = sAtt.length ? Math.round(sPresent/sAtt.length*100) : null;
-      return {...srv, total:mine.length, att, call, vis, lastDate:last?.date??null, sPct, sExcused};
+      return {...srv, total:mine.length, att, call, vis, lesson, lastDate:last?.date??null, sPct, sExcused};
     }).sort((a,b)=>b.total-a.total);
 
     const filtered = _filterClass==='__all__' ? stats : stats.filter(s=>s.classId===_filterClass);
@@ -242,6 +243,7 @@ const AdminScreen = (() => {
               <span class="m-chip m-chip--green">📋 ${s.att}</span>
               <span class="m-chip m-chip--orange">📞 ${s.call}</span>
               <span class="m-chip m-chip--purple">🏠 ${s.vis}</span>
+              ${s.lesson>0?`<span class="m-chip m-chip--blue">📖 ${s.lesson}</span>`:''}
               ${s.sExcused>0?`<span class="m-chip m-chip--muted">بعذر ${s.sExcused}</span>`:''}
               <span class="m-chip ${s.total>0?'m-chip--blue':'m-chip--red'}">مجموع ${s.total}</span>
             </div>
