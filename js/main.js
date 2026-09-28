@@ -21,6 +21,7 @@ window.addEventListener('load', async () => {
   ProfileScreen.init();
   AdminScreen.init();
   ServantAttendanceScreen.init();
+  EditStudentScreen.init();
 
   // 4. Hydrate state from localStorage
   const { hasUser, hasStudents, cacheAge } = State.hydrate();

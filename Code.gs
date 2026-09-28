@@ -30,7 +30,8 @@ function doGet(e) {
 function doPost(e) {
   try {
     var body = JSON.parse(e.postData.contents);
-    if (body.action === 'saveRecord') return buildResponse(saveRecord(body.record));
+    if (body.action === 'saveRecord')    return buildResponse(saveRecord(body.record));
+    if (body.action === 'updateStudent') return buildResponse(updateStudentRow(body.student));
     return buildResponse({ error: 'unknown action' });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -143,4 +144,45 @@ function buildResponse(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// ── Update a student row in the Sheet ────────
+function updateStudentRow(s) {
+  try {
+    var ss     = SpreadsheetApp.openById(SHEET_ID);
+    var cls    = s.cls ? s.cls.replace(/_/g, ' ') : '';
+    var sheet  = ss.getSheetByName(cls);
+    if (!sheet) return { error: 'Sheet not found: ' + cls };
+
+    var rows = sheet.getDataRange().getValues();
+    var rowIndex = -1;
+
+    // Find row by matching student name (row 0 = header)
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][0]).trim() === String(s.name).trim()) {
+        rowIndex = i + 1; // 1-based for Sheets API
+        break;
+      }
+    }
+
+    if (rowIndex === -1) return { error: 'Student not found: ' + s.name };
+
+    var phones = s.phones || {};
+
+    // Update all editable columns
+    sheet.getRange(rowIndex, COL.address   + 1).setValue(s.address   || '');
+    sheet.getRange(rowIndex, COL.phoneChild + 1).setValue(phones.child || '');
+    sheet.getRange(rowIndex, COL.phoneMom  + 1).setValue(phones.mom   || '');
+    sheet.getRange(rowIndex, COL.phoneDad  + 1).setValue(phones.dad   || '');
+    sheet.getRange(rowIndex, COL.school    + 1).setValue(s.school     || '');
+    sheet.getRange(rowIndex, COL.jobDad    + 1).setValue(s.jobDad     || '');
+    sheet.getRange(rowIndex, COL.jobMom    + 1).setValue(s.jobMom     || '');
+    sheet.getRange(rowIndex, COL.deacon    + 1).setValue(s.deacon     ? 'TRUE' : 'FALSE');
+    sheet.getRange(rowIndex, COL.confessor + 1).setValue(s.confessor  || '');
+    sheet.getRange(rowIndex, COL.notes     + 1).setValue(s.notes      || '');
+
+    return { status: 'updated', row: rowIndex };
+  } catch(err) {
+    return { error: err.message };
+  }
 }

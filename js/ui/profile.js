@@ -7,7 +7,8 @@ const ProfileScreen = (() => {
 
   const init = () => {
     Utils.on('profile-back', 'click', () => Router.back());
-    State.on('recordsChanged', _refresh);
+    State.on('recordsChanged',  _refresh);
+    State.on('studentUpdated',  _refresh);
   };
 
   const open = (id) => {
@@ -46,10 +47,11 @@ const ProfileScreen = (() => {
         </p>
       </div>
 
-      <div class="action-row">
+      <div class="action-row action-row--4">
         <button class="action-btn action-btn--att"   id="p-att-btn"> <span>📋</span> حضور   </button>
         <button class="action-btn action-btn--call"  id="p-call-btn"><span>📞</span> مكالمة </button>
         <button class="action-btn action-btn--visit" id="p-vis-btn"> <span>🏠</span> افتقاد </button>
+        <button class="action-btn action-btn--edit"  id="p-edit-btn"><span>✏️</span> تعديل  </button>
       </div>
 
       <div class="info-card">
@@ -115,6 +117,7 @@ const ProfileScreen = (() => {
     `);
 
     Utils.on('p-att-btn',  'click', () => Router.go('attendance'));
+    Utils.on('p-edit-btn', 'click', () => EditStudentScreen.open(_currentId));
     Utils.on('p-call-btn', 'click', () => _logCall());
     Utils.on('p-vis-btn',  'click', () => _logWithNote('visit'));
   };

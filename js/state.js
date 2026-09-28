@@ -84,6 +84,17 @@ const State = (() => {
     emit('recordsChanged', records);
   };
 
+  const updateStudent = (updated) => {
+    _data.students = _data.students.map(s => s.id === updated.id ? updated : s);
+    // Save updated students list to cache
+    const cached = store.get(CONFIG.cache.students);
+    if (cached) {
+      cached.students = _data.students;
+      store.set(CONFIG.cache.students, cached);
+    }
+    emit('studentUpdated', updated);
+  };
+
   const addRecord = (record) => {
     _data.records = [record, ..._data.records];
     store.set(CONFIG.cache.records, _data.records);
@@ -104,7 +115,7 @@ const State = (() => {
   };
 
   return {
-    on, off, emit, get,
+    on, off, emit, get, updateStudent,
     getActiveClassId, getMyStudents, getMyClass,
     getStudentById, getClassById, getRecordsFor,
     setUser, setStudentsData, setRecords, addRecord,

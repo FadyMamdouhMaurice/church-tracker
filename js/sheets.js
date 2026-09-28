@@ -40,6 +40,17 @@ const Sheets = (() => {
     }).catch(() => {/* fire-and-forget — Firestore is the source of truth */});
   };
 
+  // ── Sync student edit to Google Sheets ──────────────────
+  const syncStudentEdit = (student) => {
+    if (!SCRIPT_URL) return;
+    fetch(SCRIPT_URL, {
+      method:  'POST',
+      mode:    'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ action: 'updateStudent', student }),
+    }).catch(() => {});
+  };
+
   // ── Export all records as CSV ─────────────────────────
   const exportCSV = () => {
     const records  = State.get('records');
@@ -72,5 +83,5 @@ const Sheets = (() => {
     a.click();
   };
 
-  return { loadStudents, syncRecord, exportCSV };
+  return { loadStudents, syncRecord, syncStudentEdit, exportCSV };
 })();

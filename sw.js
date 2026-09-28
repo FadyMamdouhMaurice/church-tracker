@@ -24,6 +24,7 @@ const CACHE_SHELL = [
   './js/ui/profile.js',
   './js/ui/admin.js',
   './js/ui/servant-attendance.js',
+  './js/ui/edit-student.js',
   './js/updater.js',
   './js/main.js',
   './manifest.json',

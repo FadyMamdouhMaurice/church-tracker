@@ -746,3 +746,80 @@ input, select, textarea { font-family: inherit; color: var(--text); }
 .s-att-btn--present.active { border-color: var(--green);  background: #f0fff6; }
 .s-att-btn--excused.active { border-color: var(--orange); background: #fff8f0; }
 .s-att-btn--absent.active  { border-color: var(--red);    background: #fff0f0; }
+
+/* ── Edit student screen ─────────────────────── */
+.edit-section {
+  background:    var(--surface);
+  border-radius: var(--radius);
+  padding:       15px;
+  margin-bottom: 12px;
+  box-shadow:    var(--shadow);
+}
+.edit-section__title {
+  font-size:     13px;
+  color:         var(--blue-2);
+  font-weight:   700;
+  margin-bottom: 12px;
+  padding-bottom:8px;
+  border-bottom: 1.5px solid var(--gray2, #e8ecf4);
+}
+.edit-textarea {
+  width:         100%;
+  border:        1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding:       10px 12px;
+  font-size:     14px;
+  font-family:   inherit;
+  color:         var(--text);
+  resize:        vertical;
+  outline:       none;
+  min-height:    72px;
+  background:    white;
+}
+.edit-textarea:focus { border-color: var(--blue-2); }
+
+/* Toggle switch */
+.toggle-row  { padding: 4px 0; }
+.toggle-label {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  cursor:      pointer;
+  font-size:   14px;
+  font-weight: 600;
+}
+.toggle-label input { display: none; }
+.toggle-track {
+  position:      relative;
+  width:         44px;
+  height:        24px;
+  background:    var(--border);
+  border-radius: 12px;
+  transition:    background .2s;
+  flex-shrink:   0;
+}
+.toggle-label input:checked + .toggle-track { background: var(--green); }
+.toggle-thumb {
+  position:      absolute;
+  top:           3px;
+  left:          3px;
+  width:         18px;
+  height:        18px;
+  background:    white;
+  border-radius: 50%;
+  transition:    transform .2s;
+  box-shadow:    0 1px 4px rgba(0,0,0,.2);
+}
+.toggle-label input:checked + .toggle-track .toggle-thumb { transform: translateX(20px); }
+
+.edit-last-modified {
+  font-size:  12px;
+  color:      var(--text-2);
+  text-align: center;
+  padding:    8px;
+  margin-top: 4px;
+}
+
+/* 4-button action row */
+.action-row--4 { grid-template-columns: repeat(4, 1fr); }
+.action-btn--edit { border-color: var(--blue-2); color: var(--blue-2); background: #f0f4ff; }
