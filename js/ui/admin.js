@@ -235,12 +235,17 @@ const AdminScreen = (() => {
     );
 
     const stats = allServants.map(srv => {
-      const mine = records.filter(r => r.by === srv.name);
-      const att  = mine.filter(r => r.type === 'attendance').length;
-      const call = mine.filter(r => r.type === 'call').length;
-      const vis  = mine.filter(r => r.type === 'visit').length;
-      const last = mine.sort((a,b) => b.date.localeCompare(a.date))[0];
-      return { ...srv, total: mine.length, att, call, vis, lastDate: last?.date ?? null };
+      const mine    = records.filter(r => r.by === srv.name);
+      const att     = mine.filter(r => r.type === 'attendance').length;
+      const call    = mine.filter(r => r.type === 'call').length;
+      const vis     = mine.filter(r => r.type === 'visit').length;
+      const last    = mine.sort((a,b) => b.date.localeCompare(a.date))[0];
+      // Servant own attendance
+      const sAtt    = records.filter(r => r.type === 'servant-attendance' && r.servantName === srv.name);
+      const sTotal  = sAtt.length;
+      const sPresent= sAtt.filter(r => r.present).length;
+      const sPct    = sTotal ? Math.round(sPresent / sTotal * 100) : null;
+      return { ...srv, total: mine.length, att, call, vis, lastDate: last?.date ?? null, sPct, sTotal };
     }).sort((a, b) => b.total - a.total);
 
     const filtered = _filterClass === '__all__'
@@ -254,7 +259,7 @@ const AdminScreen = (() => {
             <tr>
               <th>الخادم</th>
               ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-              <th>حضور</th><th>مكالمات</th><th>افتقاد</th><th>الإجمالي</th><th>آخر نشاط</th>
+              <th>حضور</th><th>مكالمات</th><th>افتقاد</th><th>الإجمالي</th><th>حضوره%</th><th>آخر نشاط</th>
             </tr>
           </thead>
           <tbody>
@@ -266,6 +271,7 @@ const AdminScreen = (() => {
                 <td class="td--center">${s.call}</td>
                 <td class="td--center">${s.vis}</td>
                 <td class="td--center" style="font-weight:700;color:${s.total > 0 ? 'var(--green)' : 'var(--red)'}">${s.total}</td>
+                <td class="td--center" style="font-weight:700;color:${s.sPct === null ? '#999' : s.sPct < 50 ? 'var(--red)' : s.sPct < 75 ? 'var(--orange)' : 'var(--green)'}">${s.sPct === null ? '—' : s.sPct + '%'}</td>
                 <td class="td--muted">${s.lastDate ? Utils.formatDate(s.lastDate) : 'لا يوجد'}</td>
               </tr>`).join('')}
           </tbody>

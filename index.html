@@ -133,6 +133,13 @@
           <div class="menu-card__sub">كل الفصول — تقارير شاملة</div>
         </div>
       </div>
+      <div id="btn-servant-att" class="menu-card menu-card--admin" style="margin-top:8px;background:#0f6e56">
+        <div class="menu-card__icon">🧑‍💼</div>
+        <div>
+          <div class="menu-card__label">حضور الخدام</div>
+          <div class="menu-card__sub">تسجيل حضور وغياب الخدام أسبوعياً</div>
+        </div>
+      </div>
     </div>
 
     <div id="class-switcher-wrap" class="form-group" style="display:none;margin-top:8px">
@@ -188,6 +195,25 @@
   <div id="profile-content" class="content"></div>
 </div>
 
+<!-- ═══ SERVANT ATTENDANCE ══════════════════════════════ -->
+<div id="servant-att-screen" class="screen">
+  <div class="topbar">
+    <button class="topbar__back" id="servant-att-back">→</button>
+    <h1 class="topbar__title">حضور الخدام</h1>
+    <div id="servant-att-saving" style="font-size:12px;opacity:.8;color:white"></div>
+  </div>
+  <div class="content">
+    <div class="week-selector">
+      <span class="week-selector__label">الأسبوع:</span>
+      <select id="servant-att-week"></select>
+    </div>
+    <p id="servant-att-summary" class="att-summary">لم يُسجَّل بعد</p>
+    <div id="servant-att-list" class="att-list"></div>
+    <div style="height:90px"></div>
+  </div>
+  <button class="save-fab" id="servant-att-save">💾 حفظ الحضور</button>
+</div>
+
 <!-- ═══ ADMIN ═════════════════════════════════════════════ -->
 <div id="admin-screen" class="screen">
   <div class="topbar">
@@ -231,6 +257,7 @@
 <script src="js/ui/attendance.js"></script>
 <script src="js/ui/profile.js"></script>
 <script src="js/ui/admin.js"></script>
+<script src="js/ui/servant-attendance.js"></script>
 <script src="js/updater.js"></script>
 <script src="js/main.js"></script>
 

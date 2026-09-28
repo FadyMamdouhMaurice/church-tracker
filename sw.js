@@ -23,6 +23,7 @@ const CACHE_SHELL = [
   './js/ui/attendance.js',
   './js/ui/profile.js',
   './js/ui/admin.js',
+  './js/ui/servant-attendance.js',
   './js/updater.js',
   './js/main.js',
   './manifest.json',

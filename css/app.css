@@ -692,3 +692,16 @@ input, select, textarea { font-family: inherit; color: var(--text); }
   display:       block;
   border:        3px solid var(--blue);
 }
+
+/* ── Servant attendance ───────────────────────── */
+.servant-att-class {
+  margin-bottom: 16px;
+}
+.servant-att-class__title {
+  font-size:     13px;
+  font-weight:   700;
+  color:         var(--text-2);
+  padding:       6px 4px;
+  border-bottom: 1.5px solid var(--border);
+  margin-bottom: 8px;
+}
