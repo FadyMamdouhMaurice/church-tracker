@@ -81,14 +81,8 @@ const HomeScreen = (() => {
       })
       .sort((a, b) => a.day - b.day);
 
-    // Ensure container exists (injected once after home-stats)
-    let banner = Utils.el('home-birthday-banner');
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'home-birthday-banner';
-      const stats = Utils.el('home-stats');
-      stats?.insertAdjacentElement('afterend', banner);
-    }
+    const banner = Utils.el('home-birthday-banner');
+    if (!banner) return;
 
     if (upcoming.length === 0) {
       banner.innerHTML = '';
