@@ -3,8 +3,8 @@
 // ─────────────────────────────────────────────
 
 const AdminScreen = (() => {
-  let _activeTab    = 'overview';
-  let _filterClass  = '__all__';
+  let _activeTab   = 'overview';
+  let _filterClass = '__all__';
 
   const init = () => {
     Utils.on('admin-back',         'click', () => Router.back());
@@ -42,73 +42,65 @@ const AdminScreen = (() => {
 
   const _switchTab = (tab) => {
     _activeTab = tab;
-
     const tabBtnId  = { overview:'tab-overview', attendance:'tab-att',
-                        followup:'tab-followup', servants:'tab-servants',
+                        followup:'tab-followup',  servants:'tab-servants',
                         birthdays:'tab-birthdays' };
     const contentId = { overview:'admin-overview', attendance:'admin-attendance',
-                        followup:'admin-followup', servants:'admin-servants',
+                        followup:'admin-followup',  servants:'admin-servants',
                         birthdays:'admin-birthdays' };
-
     Object.keys(tabBtnId).forEach(t => {
       Utils.el(tabBtnId[t])?.classList.toggle('active', t === tab);
       Utils.el(contentId[t])?.style.setProperty('display', t === tab ? '' : 'none');
     });
-
     _renderTab(tab);
   };
 
   const _renderTab = (tab) => {
-    const renders = {
-      overview:   _renderOverview,
-      attendance: _renderAttendance,
-      followup:   _renderFollowup,
-      servants:   _renderServants,
-      birthdays:  _renderBirthdays,
-    };
-    renders[tab]?.();
+    ({ overview:_renderOverview, attendance:_renderAttendance,
+       followup:_renderFollowup, servants:_renderServants,
+       birthdays:_renderBirthdays })[tab]?.();
   };
+
+  // ── helpers ───────────────────────────────
+  const _clsShort = s => State.getClassById(s.cls)?.name?.replace('فصل ','') ?? '';
+  const _color    = p => p === null ? '#999' : p < 50 ? 'var(--red)' : p < 75 ? 'var(--orange)' : 'var(--green)';
 
   // ── Overview ──────────────────────────────
   const _renderOverview = () => {
     const records  = State.get('records');
     const students = _filteredStudents();
     const wk       = Utils.weekKey();
-
-    const attThisWeek = records.filter(r =>
-      r.type === 'attendance' && r.week === wk &&
-      students.some(s => s.id === r.studentId)
-    );
-    const present  = attThisWeek.filter(r => r.present).length;
-    const pct      = attThisWeek.length ? Math.round(present / attThisWeek.length * 100) : 0;
-    const servants = [...new Set(records.map(r => r.by).filter(Boolean))];
+    const attWk    = records.filter(r =>
+      r.type==='attendance' && r.week===wk && students.some(s=>s.id===r.studentId));
+    const present  = attWk.filter(r=>r.present).length;
+    const pct      = attWk.length ? Math.round(present/attWk.length*100) : 0;
+    const servants = [...new Set(records.map(r=>r.by).filter(Boolean))];
 
     const classStats = CONFIG.classes.map(c => {
-      const st  = State.get('students').filter(s => s.cls === c.id);
-      const att = records.filter(r => r.type === 'attendance' && r.week === wk && st.some(s => s.id === r.studentId));
-      const pr  = att.filter(r => r.present).length;
-      const p   = att.length ? Math.round(pr / att.length * 100) : 0;
-      return { ...c, total: st.length, present: pr, recorded: att.length, pct: p };
+      const st  = State.get('students').filter(s=>s.cls===c.id);
+      const att = records.filter(r=>r.type==='attendance'&&r.week===wk&&st.some(s=>s.id===r.studentId));
+      const pr  = att.filter(r=>r.present).length;
+      const p   = att.length ? Math.round(pr/att.length*100) : 0;
+      return { ...c, total:st.length, present:pr, pct:p };
     });
 
     Utils.html('admin-overview', `
       <div class="big-stat">
         <div class="big-stat__num">${pct}%</div>
-        <div class="big-stat__lbl">الحضور ${_filterClass === '__all__' ? 'الإجمالي' : ''} هذا الأسبوع
-          — ${present} من ${attThisWeek.length} مُسجَّل</div>
+        <div class="big-stat__lbl">الحضور الإجمالي هذا الأسبوع — ${present} من ${attWk.length} مُسجَّل</div>
         <div class="progress-bar"><div class="progress-bar__fill" style="width:${pct}%"></div></div>
       </div>
       <div class="stats-grid stats-grid--2">
         <div class="stat-card"><div class="stat-card__num">${students.length}</div><div class="stat-card__lbl">إجمالي الأولاد</div></div>
         <div class="stat-card"><div class="stat-card__num">${servants.length}</div><div class="stat-card__lbl">خدام نشطين</div></div>
       </div>
-      ${_filterClass === '__all__' ? `
+      ${_filterClass==='__all__' ? `
         <h3 class="section-title">الحضور بالفصل</h3>
-        ${classStats.map(c => `
+        ${classStats.map(c=>`
           <div class="class-stat-row">
             <div class="class-stat-row__header">
               <span>${c.name}</span>
-              <span class="class-stat-row__count">${c.present}/${c.total}</span>
+              <span class="class-stat-row__count">${c.present}/${c.total} — ${c.pct}%</span>
             </div>
             <div class="progress-bar progress-bar--sm">
               <div class="progress-bar__fill" style="width:${c.pct}%"></div>
@@ -116,316 +108,244 @@ const AdminScreen = (() => {
           </div>`).join('')}` : ''}
       <button class="export-btn" id="export-csv-btn">⬇️ تصدير تقرير CSV</button>
     `);
-    Utils.on('export-csv-btn', 'click', () => Sheets.exportCSV());
+    Utils.on('export-csv-btn','click',()=>Sheets.exportCSV());
   };
 
-  // ── Attendance ────────────────────────────
+  // ── Attendance — mobile cards ─────────────
   const _renderAttendance = () => {
-    const weeks    = Array.from({ length: 6 }, (_, i) => Utils.weekKey(-i));
-    const attRecs  = State.get('records').filter(r => r.type === 'attendance');
+    const weeks    = Array.from({length:6},(_,i)=>Utils.weekKey(-i));
+    const attRecs  = State.get('records').filter(r=>r.type==='attendance');
     const students = _filteredStudents();
 
     const rows = students.map(s => {
-      const data     = weeks.map(w => attRecs.find(r => r.studentId === s.id && r.week === w));
+      const data     = weeks.map(w=>attRecs.find(r=>r.studentId===s.id&&r.week===w));
       const recorded = data.filter(Boolean).length;
-      const present  = data.filter(d => d?.present).length;
-      const pct      = recorded ? Math.round(present / recorded * 100) : null;
-      return { s, data, pct };
-    }).sort((a, b) => (a.pct ?? -1) - (b.pct ?? -1));
-
-    const clsName = s => State.getClassById(s.cls)?.name?.replace('فصل ', '') ?? '';
-    const color   = p => p === null ? '#999' : p < 50 ? 'var(--red)' : p < 75 ? 'var(--orange)' : 'var(--green)';
+      const present  = data.filter(d=>d?.present).length;
+      const pct      = recorded ? Math.round(present/recorded*100) : null;
+      return {s,data,pct};
+    }).sort((a,b)=>(a.pct??-1)-(b.pct??-1));
 
     Utils.html('admin-attendance', `
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>الاسم</th>
-              ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-              ${weeks.slice(0, 4).map(w => `<th>${w.slice(5)}</th>`).join('')}
-              <th>%</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(({ s, data, pct }) => `
-              <tr class="${pct !== null && pct < 50 ? 'row--alert' : ''}" data-id="${s.id}" style="cursor:pointer">
-                <td>${s.name.split(' ').slice(0, 2).join(' ')}</td>
-                ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(s)}</td>` : ''}
-                ${data.slice(0, 4).map(d => `<td class="td--center">${d ? (d.present ? '✅' : '❌') : '—'}</td>`).join('')}
-                <td style="font-weight:700;color:${color(pct)}">${pct === null ? '—' : pct + '%'}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+      <div class="m-list">
+        ${rows.map(({s,data,pct})=>`
+          <div class="m-card ${pct!==null&&pct<50?'m-card--alert':''}" data-id="${s.id}">
+            <div class="m-card__top">
+              <div class="m-card__avatar">${Utils.initials(s.name)}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${s.name.split(' ').slice(0,2).join(' ')}</div>
+                ${_filterClass==='__all__'?`<div class="m-card__sub">${_clsShort(s)}</div>`:''}
+              </div>
+              <div class="m-card__badge" style="color:${_color(pct)}">${pct===null?'—':pct+'%'}</div>
+            </div>
+            <div class="m-card__weeks">
+              ${data.slice(0,6).map((d,i)=>`
+                <div class="m-week-dot" title="${weeks[i].slice(5)}">
+                  <span>${d?(d.present?'✅':'❌'):'—'}</span>
+                  <span class="m-week-dot__label">${weeks[i].slice(5,10)}</span>
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
       </div>
       <p class="table-note">🔴 أقل من 50% حضور</p>
     `);
-
-    Utils.el('admin-attendance')?.addEventListener('click', e => {
-      const row = e.target.closest('tr[data-id]');
-      if (row) ProfileScreen.open(parseInt(row.dataset.id, 10));
+    Utils.el('admin-attendance')?.addEventListener('click',e=>{
+      const c=e.target.closest('[data-id]');
+      if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
     });
   };
 
-  // ── Follow-up ─────────────────────────────
+  // ── Follow-up — mobile cards ──────────────
   const _renderFollowup = () => {
     const records  = State.get('records');
     const students = _filteredStudents();
 
     const rows = students.map(s => {
-      const visits = records.filter(r => r.type === 'visit' && r.studentId === s.id)
-        .sort((a, b) => b.date.localeCompare(a.date));
-      const calls  = records.filter(r => r.type === 'call'  && r.studentId === s.id)
-        .sort((a, b) => b.date.localeCompare(a.date));
-      const lastV = visits[0]; const lastC = calls[0];
-      return {
-        s,
-        vd:  lastV ? Utils.daysSince(lastV.date) : 999,
-        cd:  lastC ? Utils.daysSince(lastC.date) : 999,
-        vBy: lastV?.by ?? '—',
-        cBy: lastC?.by ?? '—',
-      };
-    }).sort((a, b) => b.vd - a.vd);
+      const visits = records.filter(r=>r.type==='visit'&&r.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
+      const calls  = records.filter(r=>r.type==='call' &&r.studentId===s.id).sort((a,b)=>b.date.localeCompare(a.date));
+      return { s,
+        vd: visits[0] ? Utils.daysSince(visits[0].date) : 999,
+        cd: calls[0]  ? Utils.daysSince(calls[0].date)  : 999,
+        vBy: visits[0]?.by??'—', cBy: calls[0]?.by??'—' };
+    }).sort((a,b)=>b.vd-a.vd);
 
-    const clsName = s => State.getClassById(s.cls)?.name?.replace('فصل ', '') ?? '';
-    const vColor  = d => d > CONFIG.followup.visitWarningDays ? 'var(--red)' : 'var(--green)';
-    const cColor  = d => d > CONFIG.followup.callWarningDays  ? 'var(--red)' : 'var(--green)';
+    const vColor = d => d>CONFIG.followup.visitWarningDays?'var(--red)':'var(--green)';
+    const cColor = d => d>CONFIG.followup.callWarningDays ?'var(--red)':'var(--green)';
 
     Utils.html('admin-followup', `
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>الاسم</th>
-              ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-              <th>آخر افتقاد</th><th>بواسطة</th>
-              <th>آخر مكالمة</th><th>بواسطة</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows.map(({ s, vd, cd, vBy, cBy }) => `
-              <tr class="${vd > CONFIG.followup.visitWarningDays || cd > CONFIG.followup.callWarningDays ? 'row--alert' : ''}"
-                  data-id="${s.id}" style="cursor:pointer">
-                <td>${s.name.split(' ').slice(0, 2).join(' ')}</td>
-                ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(s)}</td>` : ''}
-                <td style="color:${vColor(vd)}">${vd === 999 ? 'لم يُفتقد' : vd + ' يوم'}</td>
-                <td class="td--muted">${vd === 999 ? '—' : vBy}</td>
-                <td style="color:${cColor(cd)}">${cd === 999 ? 'لم يُتصل' : cd + ' يوم'}</td>
-                <td class="td--muted">${cd === 999 ? '—' : cBy}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+      <div class="m-list">
+        ${rows.map(({s,vd,cd,vBy,cBy})=>`
+          <div class="m-card ${(vd>CONFIG.followup.visitWarningDays||cd>CONFIG.followup.callWarningDays)?'m-card--alert':''}" data-id="${s.id}">
+            <div class="m-card__top">
+              <div class="m-card__avatar">${Utils.initials(s.name)}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${s.name.split(' ').slice(0,2).join(' ')}</div>
+                ${_filterClass==='__all__'?`<div class="m-card__sub">${_clsShort(s)}</div>`:''}
+              </div>
+            </div>
+            <div class="m-card__stats2">
+              <div class="m-stat">
+                <span class="m-stat__icon">🏠</span>
+                <span class="m-stat__val" style="color:${vColor(vd)}">${vd===999?'لم يُفتقد':vd+' يوم'}</span>
+                <span class="m-stat__by">${vd===999?'':vBy}</span>
+              </div>
+              <div class="m-stat">
+                <span class="m-stat__icon">📞</span>
+                <span class="m-stat__val" style="color:${cColor(cd)}">${cd===999?'لم يُتصل':cd+' يوم'}</span>
+                <span class="m-stat__by">${cd===999?'':cBy}</span>
+              </div>
+            </div>
+          </div>`).join('')}
       </div>
       <p class="table-note">🔴 افتقاد +${CONFIG.followup.visitWarningDays} يوم / مكالمة +${CONFIG.followup.callWarningDays} يوم</p>
     `);
-
-    Utils.el('admin-followup')?.addEventListener('click', e => {
-      const row = e.target.closest('tr[data-id]');
-      if (row) ProfileScreen.open(parseInt(row.dataset.id, 10));
+    Utils.el('admin-followup')?.addEventListener('click',e=>{
+      const c=e.target.closest('[data-id]');
+      if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
     });
   };
 
-  // ── Servant activity ──────────────────────
+  // ── Servants — mobile cards ───────────────
   const _renderServants = () => {
-    const records = State.get('records');
-    const allServants = CONFIG.classes.flatMap(c =>
-      c.servants.map(name => ({ name, classId: c.id, className: c.name }))
-    );
+    const records     = State.get('records');
+    const allServants = CONFIG.classes.flatMap(c=>c.servants.map(name=>({name,classId:c.id,className:c.name})));
 
     const stats = allServants.map(srv => {
-      const mine     = records.filter(r => r.by === srv.name);
-      const att      = mine.filter(r => r.type === 'attendance').length;
-      const call     = mine.filter(r => r.type === 'call').length;
-      const vis      = mine.filter(r => r.type === 'visit').length;
-      const last     = mine.sort((a,b) => b.date.localeCompare(a.date))[0];
-      const sAtt     = records.filter(r => r.type === 'servant-attendance' && r.servantName === srv.name);
-      const sTotal   = sAtt.length;
-      const sPresent = sAtt.filter(r => r.present).length;
-      const sExcused = sAtt.filter(r => !r.present && r.excused).length;
-      const sPct     = sTotal ? Math.round(sPresent / sTotal * 100) : null;
-      return { ...srv, total: mine.length, att, call, vis, lastDate: last?.date ?? null, sPct, sTotal, sExcused };
-    }).sort((a, b) => b.total - a.total);
+      const mine     = records.filter(r=>r.by===srv.name);
+      const att      = mine.filter(r=>r.type==='attendance').length;
+      const call     = mine.filter(r=>r.type==='call').length;
+      const vis      = mine.filter(r=>r.type==='visit').length;
+      const last     = [...mine].sort((a,b)=>b.date.localeCompare(a.date))[0];
+      const sAtt     = records.filter(r=>r.type==='servant-attendance'&&r.servantName===srv.name);
+      const sPresent = sAtt.filter(r=>r.present).length;
+      const sExcused = sAtt.filter(r=>!r.present&&r.excused).length;
+      const sPct     = sAtt.length ? Math.round(sPresent/sAtt.length*100) : null;
+      return {...srv, total:mine.length, att, call, vis, lastDate:last?.date??null, sPct, sExcused};
+    }).sort((a,b)=>b.total-a.total);
 
-    const filtered = _filterClass === '__all__'
-      ? stats
-      : stats.filter(s => s.classId === _filterClass);
+    const filtered = _filterClass==='__all__' ? stats : stats.filter(s=>s.classId===_filterClass);
 
     Utils.html('admin-servants', `
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>الخادم</th>
-              ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-              <th>حضور</th><th>مكالمات</th><th>افتقاد</th><th>الإجمالي</th><th>حضوره%</th><th>بعذر</th><th>آخر نشاط</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${filtered.map(s => `
-              <tr class="${s.total === 0 ? 'row--alert' : ''}">
-                <td style="font-weight:600">${s.name}</td>
-                ${_filterClass === '__all__' ? `<td class="td--muted">${s.className.replace('فصل ','')}</td>` : ''}
-                <td class="td--center">${s.att}</td>
-                <td class="td--center">${s.call}</td>
-                <td class="td--center">${s.vis}</td>
-                <td class="td--center" style="font-weight:700;color:${s.total > 0 ? 'var(--green)' : 'var(--red)'}">${s.total}</td>
-                <td class="td--center" style="font-weight:700;color:${s.sPct === null ? '#999' : s.sPct < 50 ? 'var(--red)' : s.sPct < 75 ? 'var(--orange)' : 'var(--green)'}">${s.sPct === null ? '—' : s.sPct + '%'}</td>
-                <td class="td--center" style="color:${s.sExcused > 0 ? 'var(--orange)' : 'var(--text-2)'}">${s.sExcused || '—'}</td>
-                <td class="td--muted">${s.lastDate ? Utils.formatDate(s.lastDate) : 'لا يوجد'}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+      <div class="m-list">
+        ${filtered.map(s=>`
+          <div class="m-card ${s.total===0?'m-card--alert':''}">
+            <div class="m-card__top">
+              <div class="m-card__avatar m-card__avatar--servant">${s.name[0]}</div>
+              <div class="m-card__info">
+                <div class="m-card__name">${s.name}</div>
+                ${_filterClass==='__all__'?`<div class="m-card__sub">${s.className.replace('فصل','').trim()}</div>`:''}
+              </div>
+              <div class="m-card__badge" style="color:${_color(s.sPct)}">${s.sPct===null?'—':s.sPct+'%'}</div>
+            </div>
+            <div class="m-card__chips">
+              <span class="m-chip m-chip--green">📋 ${s.att}</span>
+              <span class="m-chip m-chip--orange">📞 ${s.call}</span>
+              <span class="m-chip m-chip--purple">🏠 ${s.vis}</span>
+              ${s.sExcused>0?`<span class="m-chip m-chip--muted">بعذر ${s.sExcused}</span>`:''}
+              <span class="m-chip ${s.total>0?'m-chip--blue':'m-chip--red'}">مجموع ${s.total}</span>
+            </div>
+            ${s.lastDate?`<div class="m-card__last">آخر نشاط: ${Utils.formatDate(s.lastDate)}</div>`:'<div class="m-card__last m-card__last--none">لا يوجد نشاط</div>'}
+          </div>`).join('')}
       </div>
       <p class="table-note">🔴 خادم لم يُسجل أي نشاط بعد</p>
     `);
   };
 
-  // ── Birthdays Dashboard ───────────────────
+  // ── Birthdays — mobile cards ──────────────
   const _renderBirthdays = () => {
     const students = _filteredStudents();
     const now      = new Date();
 
-    // Parse birthday → { month (1-based), day, year, dateObj }
-    const withBd = students
-      .map(s => {
-        if (!s.birthday) return null;
-        const d = new Date(s.birthday + 'T00:00:00');
-        if (isNaN(d)) return null;
-        return { s, month: d.getMonth() + 1, day: d.getDate(), year: d.getFullYear(), d };
-      })
-      .filter(Boolean);
+    const withBd = students.map(s => {
+      if (!s.birthday) return null;
+      const d = new Date(s.birthday + 'T00:00:00');
+      if (isNaN(d)) return null;
+      return { s, month:d.getMonth()+1, day:d.getDate(), year:d.getFullYear(), d };
+    }).filter(Boolean);
 
-    const noBd = students.filter(s => !s.birthday || !withBd.find(x => x.s.id === s.id));
+    const noBd = students.filter(s => !withBd.find(x=>x.s.id===s.id));
 
-    // ── Weekly view: next 7 days (rolling) ──
+    // Weekly — next 7 days
     const weekItems = [];
-    for (let offset = 0; offset <= 6; offset++) {
-      const target = new Date(now);
-      target.setDate(now.getDate() + offset);
-      const tm = target.getMonth() + 1;
-      const td = target.getDate();
+    for (let i=0; i<=6; i++) {
+      const t = new Date(now); t.setDate(now.getDate()+i);
+      const tm=t.getMonth()+1, td=t.getDate();
       withBd.forEach(b => {
-        if (b.month === tm && b.day === td) {
-          const age = now.getFullYear() - b.year;
-          weekItems.push({ ...b, offset, age });
-        }
+        if (b.month===tm && b.day===td)
+          weekItems.push({...b, offset:i, age:now.getFullYear()-b.year});
       });
     }
 
-    // ── Monthly view: current month ──
-    const thisMonth = now.getMonth() + 1;
-    const monthItems = withBd
-      .filter(b => b.month === thisMonth)
-      .map(b => ({ ...b, age: now.getFullYear() - b.year }))
-      .sort((a, b) => a.day - b.day);
+    const thisMonth     = now.getMonth()+1;
+    const nextMonthNum  = thisMonth===12?1:thisMonth+1;
+    const monthItems    = withBd.filter(b=>b.month===thisMonth)
+                                .map(b=>({...b, age:now.getFullYear()-b.year}))
+                                .sort((a,b)=>a.day-b.day);
+    const nextMonItems  = withBd.filter(b=>b.month===nextMonthNum)
+                                .map(b=>({...b, age:now.getFullYear()-b.year+(thisMonth===12?1:0)}))
+                                .sort((a,b)=>a.day-b.day);
 
-    // ── Next month ──
-    const nextMonthNum = thisMonth === 12 ? 1 : thisMonth + 1;
-    const nextMonthItems = withBd
-      .filter(b => b.month === nextMonthNum)
-      .map(b => ({ ...b, age: now.getFullYear() - b.year + (thisMonth === 12 ? 1 : 0) }))
-      .sort((a, b) => a.day - b.day);
+    const monthName = m => new Date(2000,m-1,1).toLocaleDateString('ar-EG',{month:'long'});
+    const dayLabel  = offset => offset===0?'🎉 اليوم':offset===1?'غداً':`بعد ${offset} أيام`;
 
-    const clsName = s => State.getClassById(s.cls)?.name?.replace('فصل ', '') ?? '';
-    const dayLabel = offset => offset === 0 ? '🎉 اليوم' : offset === 1 ? 'غداً' : `بعد ${offset} أيام`;
-    const monthName = m => new Date(2000, m - 1, 1).toLocaleDateString('ar-EG', { month: 'long' });
+    const bdCard = (b, showOffset=false) => `
+      <div class="m-card" data-id="${b.s.id}">
+        <div class="m-card__top">
+          <div class="m-card__avatar m-card__avatar--bd">${Utils.initials(b.s.name)}</div>
+          <div class="m-card__info">
+            <div class="m-card__name">${b.s.name.split(' ').slice(0,2).join(' ')}</div>
+            ${_filterClass==='__all__'?`<div class="m-card__sub">${_clsShort(b.s)}</div>`:''}
+          </div>
+          <div class="m-card__right">
+            ${showOffset
+              ? `<span class="bd-tag ${b.offset===0?'bd-tag--today':''}">${dayLabel(b.offset)}</span>`
+              : `<span class="bd-tag">يوم ${b.day}</span>`}
+            <div class="m-card__age">${b.age} سنة</div>
+          </div>
+        </div>
+      </div>`;
 
-    const bdRow = (b, showDay = false) => `
-      <tr data-id="${b.s.id}" style="cursor:pointer">
-        <td>${b.s.name.split(' ').slice(0, 2).join(' ')}</td>
-        ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(b.s)}</td>` : ''}
-        ${showDay ? `<td class="td--center"><span class="bd-tag ${b.offset === 0 ? 'bd-tag--today' : ''}">${dayLabel(b.offset)}</span></td>` : `<td class="td--center">${b.day}</td>`}
-        <td class="td--center" style="color:var(--text-2)">${b.age} سنة</td>
-      </tr>`;
+    const section = (icon, title, count, items, showOffset=false, emptyMsg='لا توجد أعياد ميلاد') => `
+      <div class="bd-section">
+        <div class="bd-section__header">
+          ${icon} ${title}
+          <span class="birthday-card__count">${count}</span>
+        </div>
+        ${items.length===0
+          ? `<p class="bd-empty">${emptyMsg}</p>`
+          : `<div class="m-list m-list--inset">${items.map(b=>bdCard(b,showOffset)).join('')}</div>`}
+      </div>`;
 
     Utils.html('admin-birthdays', `
-
-      <!-- ① هذا الأسبوع -->
-      <div class="bd-section">
-        <div class="bd-section__header">📅 هذا الأسبوع (7 أيام)</div>
-        ${weekItems.length === 0
-          ? '<p class="bd-empty">لا توجد أعياد ميلاد هذا الأسبوع</p>'
-          : `<div class="table-wrap">
-              <table class="data-table">
-                <thead><tr>
-                  <th>الاسم</th>
-                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-                  <th>متى</th><th>السن</th>
-                </tr></thead>
-                <tbody>${weekItems.map(b => bdRow(b, true)).join('')}</tbody>
-              </table>
-            </div>`}
-      </div>
-
-      <!-- ② هذا الشهر -->
-      <div class="bd-section">
-        <div class="bd-section__header">🗓️ ${monthName(thisMonth)} — هذا الشهر
-          <span class="birthday-card__count">${monthItems.length}</span>
-        </div>
-        ${monthItems.length === 0
-          ? '<p class="bd-empty">لا توجد أعياد ميلاد هذا الشهر</p>'
-          : `<div class="table-wrap">
-              <table class="data-table">
-                <thead><tr>
-                  <th>الاسم</th>
-                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-                  <th>اليوم</th><th>السن</th>
-                </tr></thead>
-                <tbody>${monthItems.map(b => bdRow(b, false)).join('')}</tbody>
-              </table>
-            </div>`}
-      </div>
-
-      <!-- ③ الشهر القادم -->
-      <div class="bd-section">
-        <div class="bd-section__header">⏭️ ${monthName(nextMonthNum)} — الشهر القادم
-          <span class="birthday-card__count">${nextMonthItems.length}</span>
-        </div>
-        ${nextMonthItems.length === 0
-          ? '<p class="bd-empty">لا توجد أعياد ميلاد الشهر القادم</p>'
-          : `<div class="table-wrap">
-              <table class="data-table">
-                <thead><tr>
-                  <th>الاسم</th>
-                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-                  <th>اليوم</th><th>السن</th>
-                </tr></thead>
-                <tbody>${nextMonthItems.map(b => bdRow(b, false)).join('')}</tbody>
-              </table>
-            </div>`}
-      </div>
-
-      <!-- ④ بدون تاريخ ميلاد -->
-      ${noBd.length > 0 ? `
-      <div class="bd-section bd-section--muted">
-        <div class="bd-section__header">⚠️ بدون تاريخ ميلاد (${noBd.length})</div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr>
-              <th>الاسم</th>
-              ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
-            </tr></thead>
-            <tbody>
-              ${noBd.map(s => `
-                <tr data-id="${s.id}" style="cursor:pointer">
-                  <td>${s.name.split(' ').slice(0, 2).join(' ')}</td>
-                  ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(s)}</td>` : ''}
-                </tr>`).join('')}
-            </tbody>
-          </table>
-        </div>
-      </div>` : ''}
+      ${section('📅','هذا الأسبوع (7 أيام)', weekItems.length, weekItems, true, 'لا توجد أعياد ميلاد هذا الأسبوع')}
+      ${section('🗓️', monthName(thisMonth)+' — هذا الشهر', monthItems.length, monthItems, false, 'لا توجد أعياد ميلاد هذا الشهر')}
+      ${section('⏭️', monthName(nextMonthNum)+' — الشهر القادم', nextMonItems.length, nextMonItems, false, 'لا توجد أعياد ميلاد الشهر القادم')}
+      ${noBd.length>0 ? `
+        <div class="bd-section bd-section--muted">
+          <div class="bd-section__header">⚠️ بدون تاريخ ميلاد
+            <span class="birthday-card__count">${noBd.length}</span>
+          </div>
+          <div class="m-list m-list--inset">
+            ${noBd.map(s=>`
+              <div class="m-card" data-id="${s.id}">
+                <div class="m-card__top">
+                  <div class="m-card__avatar">${Utils.initials(s.name)}</div>
+                  <div class="m-card__info">
+                    <div class="m-card__name">${s.name.split(' ').slice(0,2).join(' ')}</div>
+                    ${_filterClass==='__all__'?`<div class="m-card__sub">${_clsShort(s)}</div>`:''}
+                  </div>
+                  <span class="bd-tag" style="background:#fee;color:var(--red)">ناقص</span>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
     `);
 
-    // Click → open profile
-    Utils.el('admin-birthdays')?.addEventListener('click', e => {
-      const row = e.target.closest('tr[data-id]');
-      if (row) ProfileScreen.open(parseInt(row.dataset.id, 10));
+    Utils.el('admin-birthdays')?.addEventListener('click',e=>{
+      const c=e.target.closest('[data-id]');
+      if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
     });
   };
-  // ─────────────────────────────────────────
 
   Router.onEnter('admin', _onEnter);
-
   return { init };
 })();
