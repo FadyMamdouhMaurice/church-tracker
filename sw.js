@@ -1,8 +1,11 @@
 // ─────────────────────────────────────────────
 //  sw.js  —  Service Worker (offline-first PWA)
+//  Version bump here forces cache refresh:
+const VERSION = 'v2';
 // ─────────────────────────────────────────────
 
-const CACHE_NAME  = 'church-tracker-v1';
+const CACHE_NAME = `church-tracker-${VERSION}`;
+
 const CACHE_SHELL = [
   './',
   './index.html',
@@ -20,8 +23,10 @@ const CACHE_SHELL = [
   './js/ui/attendance.js',
   './js/ui/profile.js',
   './js/ui/admin.js',
+  './js/updater.js',
   './js/main.js',
-  // Firebase CDN
+  './manifest.json',
+  './icon.svg',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
 ];
@@ -31,7 +36,7 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(CACHE_SHELL))
-      .then(() => self.skipWaiting())
+      .then(() => self.skipWaiting()) // activate immediately
   );
 });
 
@@ -44,16 +49,29 @@ self.addEventListener('activate', event => {
           .filter(k => k !== CACHE_NAME)
           .map(k => caches.delete(k))
       ))
-      .then(() => self.clients.claim())
+      .then(() => self.clients.claim()) // take control immediately
   );
 });
 
-// ── Fetch: cache-first for shell, network-first for API ──
+// ── Message from app: SKIP_WAITING ───────────
+// When user confirms update, app sends this message
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// ── Fetch strategy ────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Google Apps Script calls — network only (no cache)
-  if (url.hostname.includes('script.google.com')) {
+  // Network-only: Google APIs (Sheets + Firebase)
+  if (
+    url.hostname.includes('script.google.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firebaseio.com') ||
+    url.hostname.includes('firestore.googleapis.com')
+  ) {
     event.respondWith(
       fetch(event.request).catch(() =>
         new Response(JSON.stringify({ error: 'offline' }), {
@@ -64,25 +82,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Firebase calls — network only
-  if (url.hostname.includes('firestore.googleapis.com') ||
-      url.hostname.includes('firebase') ||
-      url.hostname.includes('google.com/v1')) {
-    event.respondWith(fetch(event.request).catch(() => new Response('', { status: 503 })));
-    return;
-  }
-
-  // App shell + CDN — cache first, fallback to network
+  // Cache-first: app shell + Firebase CDN
   event.respondWith(
-    caches.match(event.request)
-      .then(cached => cached || fetch(event.request).then(response => {
-        // Cache successful responses
-        if (response && response.status === 200) {
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+
+      return fetch(event.request).then(response => {
+        if (response?.status === 200) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
         }
         return response;
-      }))
-      .catch(() => caches.match('./index.html'))
+      });
+    }).catch(() => caches.match('./index.html'))
   );
 });

@@ -4,8 +4,9 @@
 
 window.addEventListener('load', async () => {
 
-  // 1. Register Service Worker (enables offline)
+  // 1. Register Service Worker + update detection
   _registerSW();
+  Updater.init();
 
   // 2. Init shared UI
   UI.initOfflineBanner();
