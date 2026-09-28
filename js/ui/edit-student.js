@@ -204,18 +204,11 @@ const EditStudentScreen = (() => {
   };
 
   // ── Photo helpers ─────────────────────────
-  const _loadCurrentPhoto = async (studentId) => {
+  const _loadCurrentPhoto = (studentId) => {
+    // Only show photo if already cached from a previous upload this session
     const cached = sessionStorage.getItem('photo_' + studentId);
-    if (cached) { _showPreview(cached); return; }
-    try {
-      const res  = await fetch(CONFIG.sheets.scriptUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify({ action: 'getPhoto', studentId }),
-      });
-      const data = await res.json();
-      if (data.url) { _photoUrl = data.url; _showPreview(data.url); }
-    } catch(e) {}
+    if (cached) { _showPreview(cached); }
+    // No network call — avoids 404 for students without photos
   };
 
   const _onPhotoSelected = (e) => {
