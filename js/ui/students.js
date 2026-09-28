@@ -47,20 +47,15 @@ const StudentsScreen = (() => {
     container.innerHTML = _filtered.map(_studentCard).join('');
   };
 
-  const _studentCard = (s) => {
-    const cls = State.getClassById(s.cls);
-    const clsShort = cls?.name?.replace('فصل ','') ?? '';
-    const meta = [clsShort, s.school].filter(Boolean).join(' · ');
-    return `
+  const _studentCard = (s) => `
     <div class="student-card" data-id="${s.id}">
       <div class="student-card__avatar">${Utils.initials(s.name)}</div>
       <div class="student-card__info">
         <div class="student-card__name">${s.name}</div>
-        <div class="student-card__meta">${meta || Utils.truncate(s.address, 40)}</div>
+        <div class="student-card__meta">${Utils.truncate(s.address, 50)}</div>
       </div>
       ${UI.statusDots(s.id)}
     </div>`;
-  };
 
   const _onClick = async (e) => {
     const card = e.target.closest('.student-card');
