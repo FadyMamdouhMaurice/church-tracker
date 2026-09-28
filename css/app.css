@@ -823,3 +823,77 @@ input, select, textarea { font-family: inherit; color: var(--text); }
 /* 4-button action row */
 .action-row--4 { grid-template-columns: repeat(4, 1fr); }
 .action-btn--edit { border-color: var(--blue-2); color: var(--blue-2); background: #f0f4ff; }
+
+/* ── Birthday card (home screen) ────────────── */
+.birthday-card {
+  background:    #fff8e1;
+  border:        1.5px solid #ffd54f;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  overflow:      hidden;
+}
+.birthday-card__header {
+  background:    #ffd54f;
+  color:         #5d4037;
+  font-weight:   700;
+  font-size:     13px;
+  padding:       9px 14px;
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+}
+.birthday-card__count {
+  background:    #5d4037;
+  color:         #fff;
+  border-radius: 12px;
+  padding:       1px 8px;
+  font-size:     11px;
+  font-weight:   700;
+  margin-right:  auto;
+}
+.birthday-card__list { padding: 8px 10px; }
+
+.bd-row {
+  display:        flex;
+  align-items:    center;
+  gap:            8px;
+  padding:        6px 4px;
+  border-bottom:  1px solid #ffe08222;
+  font-size:      13px;
+}
+.bd-row:last-child { border-bottom: none; }
+.bd-row--today { background: #fffde7; border-radius: 6px; }
+.bd-row__name  { flex: 1; font-weight: 600; color: var(--text-1); }
+.bd-row__cls   { font-size: 11px; color: var(--text-2); }
+
+.bd-tag {
+  font-size:     11px;
+  padding:       2px 8px;
+  border-radius: 10px;
+  background:    #e0e0e0;
+  color:         #555;
+  white-space:   nowrap;
+}
+.bd-tag--today {
+  background: var(--green);
+  color:      white;
+  font-weight: 700;
+}
+.bd-tag--past {
+  background: #f5f5f5;
+  color:      #aaa;
+}
+
+/* ── Profile birthday line ──────────────────── */
+.profile-header__birthday {
+  font-size:   12px;
+  color:       var(--text-2);
+  margin-top:  4px;
+}
+
+/* ── Alert banner variant: birthday ────────── */
+.alert-banner--birthday {
+  background:   #fff8e1;
+  border-color: #ffd54f;
+  color:        #5d4037;
+}
