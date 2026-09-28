@@ -9,6 +9,7 @@ var SKIP_TABS  = ['سجل الحضور','سجل المكالمات','سجل ال
 // ── Column indices (0-based) ──────────────────
 var COL = {
   name:       0,   // A — اسم الطفل
+  birthday:   3,   // D — تاريخ الميلاد  ← NEW
   address:    4,   // E — العنوان
   phoneChild: 5,   // F — تليفون المخدوم
   phoneMom:   6,   // G — تليفون الأم
@@ -61,6 +62,7 @@ function getStudents() {
           id:        id++,
           cls:       classId,
           name:      sName,
+          birthday:  cleanDate(r[COL.birthday]),   // ← NEW
           address:   clean(r[COL.address]),
           phones: {
             child:   extractPhone(r[COL.phoneChild]),
@@ -124,6 +126,27 @@ function clean(v) {
   return String(v).trim().replace(/\n/g,' ');
 }
 
+// Normalise birthday cell → 'YYYY-MM-DD' or ''
+function cleanDate(v) {
+  if (!v) return '';
+  // If Sheets returned a JS Date object
+  if (v instanceof Date && !isNaN(v)) {
+    var y = v.getFullYear();
+    var m = String(v.getMonth()+1).padStart(2,'0');
+    var d = String(v.getDate()).padStart(2,'0');
+    return y + '-' + m + '-' + d;
+  }
+  var s = String(v).trim();
+  if (!s) return '';
+  // Try DD/MM/YYYY or D/M/YYYY
+  var dmy = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmy) return dmy[3] + '-' + dmy[2].padStart(2,'0') + '-' + dmy[1].padStart(2,'0');
+  // Try YYYY-MM-DD already
+  var iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (iso) return s;
+  return '';
+}
+
 function extractPhone(cell) {
   if (!cell) return '';
   var s = String(cell).trim();
@@ -169,7 +192,7 @@ function updateStudentRow(s) {
 
     var phones = s.phones || {};
 
-    // Update all editable columns
+    // Update all editable columns (birthday not editable from app — edit in Sheet)
     sheet.getRange(rowIndex, COL.address   + 1).setValue(s.address   || '');
     sheet.getRange(rowIndex, COL.phoneChild + 1).setValue(phones.child || '');
     sheet.getRange(rowIndex, COL.phoneMom  + 1).setValue(phones.mom   || '');
