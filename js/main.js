@@ -27,11 +27,11 @@ window.addEventListener('load', async () => {
   // 5. Show loading screen
   Router.go('loading');
 
-  // 6. Load students (respects offline)
+  // 6. Load students
   await _bootStudents(hasStudents, cacheAge);
 
-  // 7. Init Firebase
-  DB.init();
+  // 7. Flush any pending offline writes
+  const pending = DB.init();
 
   // 8. Navigate
   Router.go(hasUser ? 'home' : 'login');
@@ -41,81 +41,69 @@ window.addEventListener('load', async () => {
 const _registerSW = () => {
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.register('./sw.js')
-    .then(reg => {
-      // Check for updates in background
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        newSW?.addEventListener('statechange', () => {
-          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available — show subtle hint
-            UI.toast('📲 تحديث جديد متاح — أعد تحميل الصفحة');
-          }
-        });
-      });
-    })
     .catch(err => console.warn('[SW] Registration failed:', err));
 };
 
 // ── Student loading strategy ──────────────────
-//
-//  Case 1 — Fresh cache (< 10 min):
-//    → Use cache immediately, refresh in background
-//
-//  Case 2 — Stale cache + online:
-//    → Fetch from Sheets, update cache, proceed
-//
-//  Case 3 — Stale cache + offline:
-//    → Use stale cache, show warning toast
-//
-//  Case 4 — No cache + online:
-//    → Fetch from Sheets
-//
-//  Case 5 — No cache + offline:
-//    → Show "no data" message, wait
-
 const _bootStudents = async (hasCache, cacheAgeMin) => {
-  const FRESH_THRESHOLD = 10; // minutes
+  const FRESH = 10; // minutes
 
-  if (hasCache && cacheAgeMin < FRESH_THRESHOLD) {
-    // Case 1: fresh cache
+  if (hasCache && cacheAgeMin < FRESH) {
+    // Fresh cache — use immediately, refresh silently
     _refreshInBackground();
     return;
   }
 
   if (hasCache && !navigator.onLine) {
-    // Case 3: stale but offline — use it with warning
-    UI.toast('⚠️ لا يوجد اتصال — بيانات قد تكون غير محدثة');
+    // Stale but offline — use cache, show pending writes count
+    _showOfflineStatus();
     return;
   }
 
   if (!hasCache && !navigator.onLine) {
-    // Case 5: nothing at all — can't do much
-    Utils.el('loading-msg').textContent = 'لا يوجد اتصال ولا بيانات محفوظة';
+    // Nothing at all
+    _showOfflineStatus();
     await _waitForConnection();
   }
 
-  // Cases 2 & 4: fetch now
-  Utils.el('loading-msg').textContent = 'جارٍ تحميل البيانات...';
+  // Fetch from Sheets
+  _setLoadingMsg('جارٍ تحميل البيانات...');
   try {
     const data = await Sheets.loadStudents();
     State.setStudentsData(data);
   } catch (err) {
     console.warn('[Boot] Sheets fetch failed:', err.message);
     if (!hasCache) {
-      Utils.el('loading-msg').textContent = 'تعذّر تحميل البيانات — تحقق من الاتصال';
+      _setLoadingMsg('تعذّر تحميل البيانات — تحقق من الاتصال');
       await new Promise(r => setTimeout(r, 2000));
     }
   }
+};
+
+// Show offline status with pending count
+const _showOfflineStatus = () => {
+  const pending = State.store.get('ct_queue', []).length;
+  const students = State.get('students')?.length ?? 0;
+
+  _setLoadingMsg(
+    pending > 0
+      ? `📴 غير متصل — جارٍ تحميل ${students} ولد من الذاكرة...\n⏳ ${pending} سجل ينتظر المزامنة`
+      : `📴 غير متصل — جارٍ تحميل ${students} ولد من الذاكرة...`
+  );
+};
+
+const _setLoadingMsg = (msg) => {
+  const el = Utils.el('loading-msg');
+  if (el) el.innerHTML = msg.replace('\n', '<br>');
 };
 
 const _refreshInBackground = async () => {
   try {
     const data = await Sheets.loadStudents();
     State.setStudentsData(data);
-  } catch { /* silent — cache is still valid */ }
+  } catch { /* silent */ }
 };
 
-// Wait until online (max 30 seconds)
 const _waitForConnection = () => new Promise(resolve => {
   if (navigator.onLine) { resolve(); return; }
   const onOnline = () => { window.removeEventListener('online', onOnline); resolve(); };
