@@ -79,6 +79,15 @@ const CONFIG = {
 
   attendance: {
     weeksToShow:  8,
-    weekStartDay: 5, // Friday
+    weekStartDay: 5, // Friday = 5
+  },
+
+  mass: {
+    weeksToShow: 8,
+  },
+
+  drive: {
+    lessonFolderId: '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5',
+    lessonFolderUrl: 'https://drive.google.com/drive/folders/1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5',
   },
 };
