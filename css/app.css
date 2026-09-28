@@ -730,6 +730,22 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 .home-action-card--call    { border-top-color:var(--orange); }
 .home-action-card--visit   { border-top-color:var(--purple); }
 .home-action-card--profile { border-top-color:var(--blue-2); }
+.home-action-card--mass    { border-top-color:#8e44ad; }
+
+/* 5 cards: 2+3 on mobile, 5 in one row on desktop */
+.home-actions-grid.has-5 {
+  grid-template-columns: repeat(2, 1fr);
+}
+.home-actions-grid.has-5 .home-action-card:last-child {
+  grid-column: 1 / -1;
+}
+@media (min-width:500px) {
+  .home-actions-grid.has-5 { grid-template-columns: repeat(3, 1fr); }
+  .home-actions-grid.has-5 .home-action-card:last-child { grid-column: auto; }
+}
+@media (min-width:700px) {
+  .home-actions-grid.has-5 { grid-template-columns: repeat(5, 1fr); }
+}
 
 .home-action-card__icon  { font-size:34px; line-height:1; }
 .home-action-card__label { font-size:14px; font-weight:700; color:var(--text); }
