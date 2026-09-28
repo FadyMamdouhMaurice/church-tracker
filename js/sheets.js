@@ -3,13 +3,13 @@
 // ─────────────────────────────────────────────
 
 const Sheets = (() => {
-  const URL = CONFIG.sheets.scriptUrl;
+  const SCRIPT_URL = CONFIG.sheets.scriptUrl;
 
   // ── Load students (classes + students from all tabs) ──
   const loadStudents = async () => {
-    if (!URL) throw new Error('Apps Script URL not configured');
+    if (!SCRIPT_URL) throw new Error('Apps Script URL not configured');
 
-    const res  = await fetch(`${URL}?action=students`, { mode: 'cors' });
+    const res  = await fetch(`${SCRIPT_URL}?action=students`, { mode: 'cors' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
@@ -20,12 +20,12 @@ const Sheets = (() => {
 
   // ── Sync a written record back to Sheets ─────────────
   const syncRecord = (record) => {
-    if (!URL) return;
+    if (!SCRIPT_URL) return;
 
     const student = State.getStudentById(record.studentId);
     const cls     = State.getClassById(record.classId);
 
-    fetch(URL, {
+    fetch(SCRIPT_URL, {
       method: 'POST',
       mode:   'no-cors',
       headers: { 'Content-Type': 'application/json' },
