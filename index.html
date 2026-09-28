@@ -88,6 +88,9 @@
       <div id="home-class-sub" style="font-size:11px;opacity:.65"></div>
     </div>
     <span id="home-role-badge" class="role-badge"></span>
+    <button id="lesson-bell-btn" class="lesson-bell-btn" style="display:none" title="درس هذا الأسبوع">
+      📖 <span class="lesson-bell-dot"></span>
+    </button>
     <button id="logout-btn" class="topbar__btn">خروج</button>
   </div>
 
@@ -296,6 +299,20 @@
     <div style="height:90px"></div>
   </div>
   <button id="mass-save-btn" class="save-fab">💾 حفظ الحضور</button>
+</div>
+
+<!-- ═══ LESSON MODAL ═══════════════════════════════════ -->
+<div id="lesson-modal-overlay" class="modal-overlay hidden">
+  <div class="modal lesson-modal">
+    <div class="lesson-modal__icon">📖</div>
+    <div id="lesson-modal-week" class="lesson-modal__week"></div>
+    <div id="lesson-modal-title" class="lesson-modal__title"></div>
+    <div id="lesson-modal-by" class="lesson-modal__by"></div>
+    <a id="lesson-modal-link" href="#" target="_blank" class="lesson-modal__link">
+      📂 فتح الدرس على Google Drive
+    </a>
+    <button id="lesson-modal-close" class="btn btn--gray" style="margin-top:12px">إغلاق</button>
+  </div>
 </div>
 
 <!-- ═══ SCRIPTS ═══════════════════════════════════════════ -->
