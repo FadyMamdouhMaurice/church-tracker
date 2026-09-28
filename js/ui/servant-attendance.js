@@ -2,10 +2,11 @@
 //  ui/servant-attendance.js
 //  Weekly attendance for servants (admin only)
 //  States: present | excused (with reason) | absent
+//  + lesson preparation tracking
 // ─────────────────────────────────────────────
 
 const ServantAttendanceScreen = (() => {
-  // _state[name] = { present: true } | { present: false, excused: true, note: '...' } | { present: false, excused: false }
+  // _state[name] = { present, excused, note, lesson }
   let _state = {};
 
   const _allServants = () =>
@@ -36,20 +37,26 @@ const ServantAttendanceScreen = (() => {
           present: r.present,
           excused: r.excused ?? false,
           note:    r.note    ?? '',
+          lesson:  r.lesson  ?? false,   // ← NEW
         };
       });
     _render();
   };
 
   const _render = () => {
-    const servants = _allServants();
-    const present  = Object.values(_state).filter(s => s.present).length;
-    const excused  = Object.values(_state).filter(s => !s.present && s.excused).length;
-    const absent   = Object.values(_state).filter(s => !s.present && !s.excused).length;
-    const total    = Object.keys(_state).length;
+    const servants   = _allServants();
+    const present    = Object.values(_state).filter(s => s.present).length;
+    const excused    = Object.values(_state).filter(s => !s.present && s.excused).length;
+    const absent     = Object.values(_state).filter(s => !s.present && !s.excused).length;
+    const lessonDone = Object.values(_state).filter(s => s.lesson).length;
+    const total      = Object.keys(_state).length;
 
     Utils.el('servant-att-summary').innerHTML = total
-      ? `تم تسجيل ${total} من ${servants.length} &nbsp;|&nbsp; ✅ حضر: <b>${present}</b> &nbsp; ⚠️ بعذر: <b>${excused}</b> &nbsp; ❌ غياب: <b>${absent}</b>`
+      ? `تم تسجيل ${total} من ${servants.length}
+         &nbsp;|&nbsp; ✅ حضر: <b>${present}</b>
+         &nbsp; ⚠️ بعذر: <b>${excused}</b>
+         &nbsp; ❌ غياب: <b>${absent}</b>
+         &nbsp; 📖 حضّر الدرس: <b>${lessonDone}</b>`
       : 'لم يُسجَّل بعد';
 
     const byClass = CONFIG.classes.map(c => ({
@@ -60,7 +67,9 @@ const ServantAttendanceScreen = (() => {
     Utils.html('servant-att-list', byClass.map(({ cls, servants }) => `
       <div class="servant-att-class">
         <div class="servant-att-class__title">${cls.name}</div>
-        ${servants.map(s => _servantRow(s.name)).join('')}
+        <div class="servant-att-rows-grid">
+          ${servants.map(s => _servantRow(s.name)).join('')}
+        </div>
       </div>`).join(''));
   };
 
@@ -69,6 +78,7 @@ const ServantAttendanceScreen = (() => {
     const isPresent = v?.present === true;
     const isExcused = v && !v.present && v.excused;
     const isAbsent  = v && !v.present && !v.excused;
+    const isLesson  = v?.lesson === true;
 
     return `<div class="servant-att-row" data-name="${name}">
       <div class="att-row__avatar">${name[0]}</div>
@@ -81,8 +91,10 @@ const ServantAttendanceScreen = (() => {
                 data-name="${name}" data-action="present" title="حضر">✅</button>
         <button class="s-att-btn s-att-btn--excused ${isExcused ? 'active' : ''}"
                 data-name="${name}" data-action="excused" title="غياب بعذر">⚠️</button>
-        <button class="s-att-btn s-att-btn--absent ${isAbsent ? 'active' : ''}"
-                data-name="${name}" data-action="absent" title="غياب بدون عذر">❌</button>
+        <button class="s-att-btn s-att-btn--absent  ${isAbsent  ? 'active' : ''}"
+                data-name="${name}" data-action="absent"  title="غياب بدون عذر">❌</button>
+        <button class="s-att-btn s-att-btn--lesson  ${isLesson  ? 'active' : ''}"
+                data-name="${name}" data-action="lesson"  title="حضّر الدرس">📖</button>
       </div>
     </div>`;
   };
@@ -93,27 +105,27 @@ const ServantAttendanceScreen = (() => {
 
     const name   = btn.dataset.name;
     const action = btn.dataset.action;
+    const cur    = _state[name] ?? { present: false, excused: false, note: '', lesson: false };
 
     if (action === 'present') {
-      _state[name] = { present: true, excused: false, note: '' };
-      _render();
-      return;
+      _state[name] = { ...cur, present: true, excused: false, note: '' };
+      _render(); return;
     }
-
     if (action === 'absent') {
-      _state[name] = { present: false, excused: false, note: '' };
-      _render();
-      return;
+      _state[name] = { ...cur, present: false, excused: false, note: '' };
+      _render(); return;
     }
-
+    if (action === 'lesson') {
+      _state[name] = { ...cur, lesson: !cur.lesson };
+      _render(); return;
+    }
     if (action === 'excused') {
-      // Ask for reason
       const note = await UI.modal.open({
         title:       `غياب بعذر: ${name}`,
         placeholder: 'اكتب سبب الغياب...',
       });
-      if (note === null) return; // cancelled
-      _state[name] = { present: false, excused: true, note };
+      if (note === null) return;
+      _state[name] = { ...cur, present: false, excused: true, note };
       _render();
     }
   };
@@ -135,7 +147,8 @@ const ServantAttendanceScreen = (() => {
         servantName: name,
         present:     val.present,
         excused:     val.excused,
-        note:        val.note ?? '',
+        note:        val.note   ?? '',
+        lesson:      val.lesson ?? false,   // ← NEW
         date:        wk,
       });
     }
@@ -146,6 +159,5 @@ const ServantAttendanceScreen = (() => {
   };
 
   Router.onEnter('servant-att', _onEnter);
-
   return { init };
 })();
