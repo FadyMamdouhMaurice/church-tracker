@@ -928,3 +928,146 @@ input, select, textarea { font-family: inherit; color: var(--text); }
   padding:    14px;
   text-align: center;
 }
+
+/* ════════════════════════════════════════════
+   MOBILE-FIRST CARD SYSTEM  (admin dashboard)
+   ════════════════════════════════════════════ */
+
+/* ── Tab bar: scrollable for 5+ tabs ─────── */
+.tab-bar {
+  overflow-x:              auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width:         none;
+  flex-wrap:               nowrap;
+  gap:                     4px;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab { flex-shrink: 0; min-width: 0; font-size: 12px; padding: 8px 10px; white-space: nowrap; }
+
+/* ── m-list: container for cards ─────────── */
+.m-list { display: flex; flex-direction: column; gap: 8px; }
+.m-list--inset { padding: 10px; }
+
+/* ── m-card: base card ────────────────────── */
+.m-card {
+  background:    var(--surface);
+  border-radius: var(--radius);
+  padding:       12px 13px;
+  box-shadow:    var(--shadow);
+  cursor:        pointer;
+  transition:    transform .12s;
+  border-right:  3px solid transparent;
+}
+.m-card:active      { transform: scale(.98); }
+.m-card--alert      { border-right-color: var(--red); background: #fff8f8; }
+
+/* ── m-card top row ──────────────────────── */
+.m-card__top {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+}
+.m-card__avatar {
+  width:           38px;
+  height:          38px;
+  border-radius:   50%;
+  background:      var(--blue-2);
+  color:           white;
+  font-size:       15px;
+  font-weight:     700;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  flex-shrink:     0;
+}
+.m-card__avatar--servant { background: var(--green); }
+.m-card__avatar--bd      { background: #f39c12; }
+
+.m-card__info { flex: 1; min-width: 0; }
+.m-card__name { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.m-card__sub  { font-size: 11px; color: var(--text-2); margin-top: 2px; }
+
+.m-card__badge {
+  font-size:   18px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+.m-card__right {
+  display:        flex;
+  flex-direction: column;
+  align-items:    flex-end;
+  gap:            4px;
+  flex-shrink:    0;
+}
+.m-card__age { font-size: 11px; color: var(--text-2); }
+
+/* ── m-card weeks row (attendance) ──────── */
+.m-card__weeks {
+  display:       flex;
+  gap:           4px;
+  margin-top:    10px;
+  padding-top:   8px;
+  border-top:    1px solid var(--bg);
+  overflow-x:    auto;
+  scrollbar-width: none;
+}
+.m-card__weeks::-webkit-scrollbar { display: none; }
+.m-week-dot {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            2px;
+  font-size:      14px;
+  min-width:      40px;
+}
+.m-week-dot__label { font-size: 9px; color: var(--text-2); }
+
+/* ── m-card follow-up stats ──────────────── */
+.m-card__stats2 {
+  display:       grid;
+  grid-template-columns: 1fr 1fr;
+  gap:           8px;
+  margin-top:    10px;
+  padding-top:   8px;
+  border-top:    1px solid var(--bg);
+}
+.m-stat {
+  display:        flex;
+  flex-direction: column;
+  gap:            2px;
+  background:     var(--bg);
+  border-radius:  var(--radius-sm);
+  padding:        8px 10px;
+}
+.m-stat__icon { font-size: 16px; }
+.m-stat__val  { font-size: 13px; font-weight: 700; }
+.m-stat__by   { font-size: 11px; color: var(--text-2); }
+
+/* ── m-card chips (servants) ─────────────── */
+.m-card__chips {
+  display:    flex;
+  flex-wrap:  wrap;
+  gap:        5px;
+  margin-top: 10px;
+  padding-top:8px;
+  border-top: 1px solid var(--bg);
+}
+.m-chip {
+  font-size:     11px;
+  font-weight:   700;
+  padding:       3px 9px;
+  border-radius: 10px;
+}
+.m-chip--green  { background: #d5f5e3; color: var(--green);  }
+.m-chip--orange { background: #fef5e7; color: var(--orange); }
+.m-chip--purple { background: #f5eeff; color: var(--purple); }
+.m-chip--blue   { background: #e8f0ff; color: var(--blue-2); }
+.m-chip--red    { background: #fde8e8; color: var(--red);    }
+.m-chip--muted  { background: #f0f0f0; color: var(--muted);  }
+
+.m-card__last {
+  font-size:  11px;
+  color:      var(--text-2);
+  margin-top: 6px;
+}
+.m-card__last--none { color: var(--red); }
