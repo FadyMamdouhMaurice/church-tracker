@@ -51,7 +51,21 @@ const Notifications = (() => {
   const _getAndSaveToken = async () => {
     if (!_messaging) return;
     try {
-      _token = await _messaging.getToken({ vapidKey: CONFIG.fcm.vapidKey });
+      // Register FCM SW with explicit scope for GitHub Pages subpath
+      let swReg;
+      try {
+        swReg = await navigator.serviceWorker.register(
+          '/church-tracker/firebase-messaging-sw.js',
+          { scope: '/church-tracker/' }
+        );
+      } catch(e) {
+        // Fallback: use existing SW registration
+        swReg = await navigator.serviceWorker.ready;
+      }
+      _token = await _messaging.getToken({
+        vapidKey: CONFIG.fcm.vapidKey,
+        serviceWorkerRegistration: swReg,
+      });
       if (!_token) return;
 
       const user = State.get('user');
