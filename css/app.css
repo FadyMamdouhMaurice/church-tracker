@@ -662,3 +662,95 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 
 /* ── Table note ──────────────────────────────── */
 .table-note { font-size:12px; color:var(--text-2); margin-bottom:14px; }
+
+/* ════════════════════════════════════════════
+   HOME SCREEN — fills space intelligently
+   ════════════════════════════════════════════ */
+
+/* Remove flex:1 stretch on home — let content breathe */
+#home-screen .content.home-content {
+  display:        flex;
+  flex-direction: column;
+  gap:            0;
+  padding:        12px var(--pad);
+}
+
+/* On wide screens: welcome card + stats side by side */
+.home-top { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }
+@media (min-width:700px) {
+  .home-top { flex-direction:row; align-items:stretch; }
+  .home-top .welcome-card { flex:1; margin-bottom:0; }
+  .home-top .stats-grid   { flex:1; margin-bottom:0; align-content:center; }
+}
+
+/* ── Action cards grid ── */
+.home-actions-grid {
+  display:  grid;
+  gap:      10px;
+  margin-bottom: 10px;
+  /* Mobile: 2×2 */
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows:    repeat(2, 1fr);
+}
+@media (min-width:600px)  { .home-actions-grid { grid-template-columns:repeat(4,1fr); grid-template-rows:1fr; } }
+@media (min-width:1000px) { .home-actions-grid { gap:14px; } }
+
+.home-action-card {
+  background:    var(--surface);
+  border-radius: var(--radius);
+  padding:       20px 12px;
+  text-align:    center;
+  box-shadow:    var(--shadow);
+  border-top:    4px solid transparent;
+  cursor:        pointer;
+  transition:    transform .15s, box-shadow .15s;
+  display:       flex;
+  flex-direction:column;
+  align-items:   center;
+  justify-content:center;
+  gap:           6px;
+  /* Fill height naturally */
+  min-height:    110px;
+}
+.home-action-card:active { transform:scale(.96); box-shadow:none; }
+
+/* On mobile: make cards taller to fill screen better */
+@media (max-width:599px) {
+  .home-actions-grid { flex:1; }
+  .home-action-card  { min-height:clamp(100px, 20vw, 140px); }
+}
+
+.home-action-card--att     { border-top-color:var(--green); }
+.home-action-card--call    { border-top-color:var(--orange); }
+.home-action-card--visit   { border-top-color:var(--purple); }
+.home-action-card--profile { border-top-color:var(--blue-2); }
+
+.home-action-card__icon  { font-size:34px; line-height:1; }
+.home-action-card__label { font-size:14px; font-weight:700; color:var(--text); }
+.home-action-card__sub   { font-size:11px; color:var(--text-2); }
+
+/* ── Admin grid ── */
+.home-admin-grid {
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:8px;
+  margin-bottom:8px;
+}
+@media (min-width:600px) { .home-admin-grid { grid-template-columns:repeat(2,1fr); } }
+
+.home-admin-card {
+  background:    var(--blue);
+  border-radius: var(--radius);
+  padding:       16px 18px;
+  cursor:        pointer;
+  display:       flex;
+  align-items:   center;
+  gap:           14px;
+  box-shadow:    var(--shadow);
+  transition:    transform .15s, opacity .15s;
+}
+.home-admin-card:active        { transform:scale(.97); opacity:.9; }
+.home-admin-card--green        { background:#0f6e56; }
+.home-admin-card__icon         { font-size:28px; flex-shrink:0; }
+.home-admin-card__label        { font-size:14px; font-weight:700; color:white; }
+.home-admin-card__sub          { font-size:12px; color:rgba(255,255,255,.75); margin-top:2px; }
