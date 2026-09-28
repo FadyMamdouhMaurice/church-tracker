@@ -4,156 +4,131 @@
 // ============================================================
 
 var SHEET_ID = "1nChuW3S20fCre9fL7N935EbTfG7AvwQVlCvB4o06TTY";
-var ADMIN_PASS = "admin2024";
 
-// ── GET: جلب بيانات الأولاد من كل الـ tabs ──────────────────
 function doGet(e) {
-  var action = e.parameter.action || "students";
-
-  if (action === "students") {
-    return getStudents();
-  }
-  if (action === "ping") {
-    return jsonResponse({ status: "ok", time: new Date().toISOString() });
-  }
-  return jsonResponse({ error: "unknown action" });
+  var action = (e && e.parameter && e.parameter.action) || "students";
+  var result = action === "students" ? getStudents() : {error:"unknown action"};
+  return buildResponse(result);
 }
 
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    if (body.action === "saveRecord") return buildResponse(saveRecord(body.record));
+    return buildResponse({error:"unknown action"});
+  } catch(err) {
+    return buildResponse({error: err.message});
+  }
+}
+
+// ── CORS response ─────────────────────────────────────────
+function buildResponse(obj) {
+  var output = ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+// ── GET students from all sheet tabs ─────────────────────
 function getStudents() {
   try {
     var ss = SpreadsheetApp.openById(SHEET_ID);
     var sheets = ss.getSheets();
-    var classes = [];
-    var allStudents = [];
-    var studentId = 1;
+    var classes = [], allStudents = [], studentId = 1;
+    var skip = ["سجل الحضور","سجل المكالمات","سجل الافتقاد","إعدادات"];
 
     sheets.forEach(function(sheet) {
-      var name = sheet.getName();
-      // تجاهل شيتات النظام
-      if (name === "سجل الحضور" || name === "سجل المكالمات" || name === "سجل الافتقاد" || name === "إعدادات") return;
+      var name = sheet.getName().trim();
+      if (skip.indexOf(name) !== -1) return;
 
       var classId = nameToId(name);
-      classes.push({ id: classId, name: name });
+      classes.push({id: classId, name: name});
 
       var data = sheet.getDataRange().getValues();
       if (data.length < 2) return;
 
-      // الصف الأول هو الـ headers — نبدأ من الصف الثاني
       for (var i = 1; i < data.length; i++) {
         var row = data[i];
         var studentName = String(row[0] || "").trim();
         if (!studentName) continue;
 
         var phones = extractPhones([row[5], row[6], row[7]]);
-        var address = String(row[4] || "").trim().replace(/\n/g, " ");
-        var notes   = String(row[13] || "").trim().replace(/\n/g, " ");
-
         allStudents.push({
           id:      studentId++,
           cls:     classId,
           name:    studentName,
-          address: address,
+          address: String(row[4]  || "").trim().replace(/\n/g," "),
           phones:  phones,
-          dob:     String(row[3] || "").trim(),
-          school:  String(row[8]  || "").trim(),
-          notes:   notes
+          school:  String(row[8]  || "").trim().replace(/\n/g," "),
+          notes:   String(row[13] || "").trim().replace(/\n/g," ")
         });
       }
     });
 
-    return jsonResponse({ classes: classes, students: allStudents });
+    return {classes: classes, students: allStudents};
   } catch(err) {
-    return jsonResponse({ error: err.message });
+    return {error: err.message};
   }
 }
 
-// ── POST: حفظ سجل (حضور / مكالمة / افتقاد) ────────────────
-function doPost(e) {
-  try {
-    var body = JSON.parse(e.postData.contents);
-
-    if (body.action === "saveRecord") {
-      return saveRecord(body.record);
-    }
-    return jsonResponse({ error: "unknown action" });
-  } catch(err) {
-    return jsonResponse({ error: err.message });
-  }
-}
-
+// ── Save record to Sheet ──────────────────────────────────
 function saveRecord(rec) {
-  var ss = SpreadsheetApp.openById(SHEET_ID);
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var names = {attendance:"سجل الحضور", call:"سجل المكالمات", visit:"سجل الافتقاد"};
+    var sheetName = names[rec.type] || "سجل متنوع";
+    var sheet = ss.getSheetByName(sheetName);
 
-  var sheetName = {
-    attendance: "سجل الحضور",
-    call:       "سجل المكالمات",
-    visit:      "سجل الافتقاد"
-  }[rec.type] || "سجل متنوع";
+    if (!sheet) {
+      sheet = ss.insertSheet(sheetName);
+      var hdr = sheet.getRange(1,1,1,8);
+      hdr.setValues([["التاريخ","اسم الولد","الفصل","النتيجة","بواسطة","ملاحظة","الأسبوع","وقت التسجيل"]]);
+      hdr.setBackground("#1a3a6b").setFontColor("#ffffff").setFontWeight("bold");
+      sheet.setFrozenRows(1);
+    }
 
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) {
-    sheet = ss.insertSheet(sheetName);
-    sheet.appendRow(["التاريخ", "اسم الولد", "الفصل", "الحضور/النتيجة", "بواسطة", "ملاحظة", "الأسبوع", "وقت التسجيل"]);
-    sheet.setFrozenRows(1);
-    // تنسيق الـ header
-    sheet.getRange(1, 1, 1, 8).setBackground("#1a3a6b").setFontColor("#ffffff").setFontWeight("bold");
+    sheet.appendRow([
+      rec.date        || "",
+      rec.studentName || "",
+      rec.className   || "",
+      rec.type === "attendance" ? (rec.present ? "حضر" : "غاب") : "تم",
+      rec.by          || "",
+      rec.note        || "",
+      rec.week        || "",
+      new Date().toLocaleString("ar-EG")
+    ]);
+    return {status:"saved"};
+  } catch(err) {
+    return {error: err.message};
   }
-
-  sheet.appendRow([
-    rec.date        || "",
-    rec.studentName || "",
-    rec.className   || "",
-    rec.type === "attendance" ? (rec.present ? "حضر" : "غاب") : "تم",
-    rec.by          || "",
-    rec.note        || "",
-    rec.week        || "",
-    new Date().toLocaleString("ar-EG")
-  ]);
-
-  return jsonResponse({ status: "saved" });
 }
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────
 function nameToId(name) {
-  return name.trim()
-    .replace(/\s+/g, "_")
-    .replace(/[^\u0600-\u06FFa-zA-Z0-9_]/g, "")
-    .substring(0, 30);
+  return name.trim().replace(/\s+/g,"_").replace(/[^\u0600-\u06FFa-zA-Z0-9_]/g,"").substring(0,30);
 }
 
 function cleanPhone(p) {
   if (!p) return null;
   var s = String(p).trim();
   if (/^[\-_\u0640\s]+$/.test(s)) return null;
-  // scientific notation
-  try {
-    var n = parseFloat(s);
-    if (!isNaN(n) && isFinite(n)) s = String(Math.round(n));
-  } catch(e) {}
-  var cleaned = s.replace(/[^\d+]/g, "");
-  if (!cleaned || cleaned.length < 8) return null;
-  if (/^\d{10}$/.test(cleaned) && cleaned[0] !== "0") cleaned = "0" + cleaned;
-  return cleaned;
+  try { var n=parseFloat(s); if(!isNaN(n)&&isFinite(n)) s=String(Math.round(n)); } catch(e){}
+  var c = s.replace(/[^\d+]/g,"");
+  if (!c || c.length < 8) return null;
+  if (/^\d{10}$/.test(c) && c[0] !== "0") c = "0" + c;
+  return c;
 }
 
 function extractPhones(cells) {
   var phones = [];
   cells.forEach(function(cell) {
     if (!cell) return;
-    var text = String(cell).trim();
-    var parts = text.split(/[\s\/\n,&]+/);
-    parts.forEach(function(part) {
+    String(cell).split(/[\s\/\n,&]+/).forEach(function(part) {
       part = part.trim();
       if (!part || /[\u0600-\u06FF]/.test(part)) return;
       var p = cleanPhone(part);
       if (p && phones.indexOf(p) === -1) phones.push(p);
     });
   });
-  return phones.slice(0, 4);
-}
-
-function jsonResponse(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+  return phones.slice(0,4);
 }

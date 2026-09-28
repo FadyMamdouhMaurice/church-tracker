@@ -315,29 +315,49 @@ function syncToSheets(rec){
 
 // ══ LOAD STUDENTS FROM SHEETS ════════════════════════════
 function loadStudentsFromSheets(cb){
+  var cached=lg("studentsData",null);
   if(!SCRIPT_URL){
-    // No script URL yet — use cached data
-    var cached=lg("studentsData",null);
     if(cached){CLASSES=cached.classes;STUDENTS=cached.students;}
     cb(); return;
   }
-  document.getElementById("loading-msg").textContent="جارٍ تحميل بيانات الأولاد من الـ Sheet...";
-  fetch(SCRIPT_URL+"?action=students")
-    .then(function(r){return r.json();})
+  var lastLoad=lg("studentsLastLoad",null);
+  var now=new Date();
+  var cacheAge=lastLoad?Math.floor((now-new Date(lastLoad))/60000):999;
+  if(cached&&cacheAge<60){
+    CLASSES=cached.classes;STUDENTS=cached.students;
+    cb();
+    if(cacheAge>10) refreshInBackground();
+    return;
+  }
+  document.getElementById("loading-msg").textContent="جارٍ تحميل بيانات الأولاد...";
+  doFetchStudents(cb);
+}
+function doFetchStudents(cb){
+  fetch(SCRIPT_URL+"?action=students",{mode:"cors"})
+    .then(function(r){
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    })
     .then(function(data){
       if(data.error) throw new Error(data.error);
       CLASSES=data.classes; STUDENTS=data.students;
       ls("studentsData",{classes:CLASSES,students:STUDENTS});
       ls("studentsLastLoad",new Date().toISOString());
-      cb();
+      if(cb) cb();
     })
     .catch(function(e){
-      // Fallback to cache
       var cached=lg("studentsData",null);
-      if(cached){CLASSES=cached.classes;STUDENTS=cached.students;toast("⚠️ تم استخدام البيانات المحفوظة");}
-      else{CLASSES=[];STUDENTS=[];}
-      cb();
+      if(cached){
+        CLASSES=cached.classes;STUDENTS=cached.students;
+        if(cb){toast("⚠️ بيانات محفوظة — "+STUDENTS.length+" ولد");cb();}
+      } else {
+        CLASSES=[];STUDENTS=[];
+        if(cb) cb();
+      }
     });
+}
+function refreshInBackground(){
+  doFetchStudents(null);
 }
 
 // ══ LOGIN ════════════════════════════════════════════════
