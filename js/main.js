@@ -22,6 +22,8 @@ window.addEventListener('load', async () => {
   AdminScreen.init();
   ServantAttendanceScreen.init();
   MassAttendanceScreen.init();
+  EventsScreen.init();
+  ReportsScreen.init();
   EditStudentScreen.init();
 
   // 4. Hydrate state from localStorage
