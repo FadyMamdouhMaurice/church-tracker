@@ -217,7 +217,7 @@ function buildResponse(obj) {
 // Returns { status:'saved', url, fileId }
 function uploadPhoto(params) {
   try {
-    var folderId = '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5';
+    var folderId = '11yEaxpNYPMd8Xl2A5LOLuXi-adJvV1Cu';
     var folder   = DriveApp.getFolderById(folderId);
 
     // Delete old photo for this student if exists
@@ -254,7 +254,7 @@ function uploadPhoto(params) {
 // ── Get photo URL for student ─────────────────
 function getStudentPhoto(studentId) {
   try {
-    var folderId = '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5';
+    var folderId = '11yEaxpNYPMd8Xl2A5LOLuXi-adJvV1Cu';
     var folder   = DriveApp.getFolderById(folderId);
     var exts     = ['.jpg', '.png', '.webp'];
 
