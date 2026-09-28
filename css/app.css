@@ -897,3 +897,34 @@ input, select, textarea { font-family: inherit; color: var(--text); }
   border-color: #ffd54f;
   color:        #5d4037;
 }
+
+/* ── Birthday dashboard sections ────────────── */
+.bd-section {
+  background:    var(--card);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  overflow:      hidden;
+  border:        1.5px solid var(--border);
+}
+.bd-section--muted { border-color: var(--border); opacity: .85; }
+
+.bd-section__header {
+  background:    var(--blue);
+  color:         white;
+  font-weight:   700;
+  font-size:     13px;
+  padding:       10px 14px;
+  display:       flex;
+  align-items:   center;
+  gap:           8px;
+}
+.bd-section--muted .bd-section__header {
+  background: var(--text-2);
+}
+
+.bd-empty {
+  font-size:  13px;
+  color:      var(--text-2);
+  padding:    14px;
+  text-align: center;
+}
