@@ -776,3 +776,64 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 .home-admin-card__icon         { font-size:28px; flex-shrink:0; }
 .home-admin-card__label        { font-size:14px; font-weight:700; color:white; }
 .home-admin-card__sub          { font-size:12px; color:rgba(255,255,255,.75); margin-top:2px; }
+
+/* ── Lesson upload card ──────────────────────── */
+.lesson-upload-card {
+  background:    linear-gradient(135deg, var(--blue), #2a5298);
+  border-radius: var(--radius);
+  padding:       16px;
+  margin-bottom: 14px;
+  color:         white;
+}
+.lesson-upload-card__header {
+  font-size:   15px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.lesson-upload-card__week {
+  font-size:   12px;
+  opacity:     .75;
+  margin-bottom: 12px;
+}
+.lesson-upload-card__input {
+  width:         100%;
+  padding:       10px 12px;
+  border:        1.5px solid rgba(255,255,255,.3);
+  border-radius: var(--radius-sm);
+  background:    rgba(255,255,255,.12);
+  color:         white;
+  font-size:     14px;
+  font-family:   inherit;
+  outline:       none;
+  margin-bottom: 8px;
+}
+.lesson-upload-card__input::placeholder { color: rgba(255,255,255,.55); }
+.lesson-upload-card__input:focus        { border-color: rgba(255,255,255,.7); }
+
+.lesson-drive-btn {
+  background:    rgba(255,255,255,.15);
+  border:        1.5px solid rgba(255,255,255,.3);
+  border-radius: var(--radius-sm);
+  color:         white;
+  padding:       9px 14px;
+  font-size:     13px;
+  font-weight:   600;
+  text-decoration: none;
+  white-space:   nowrap;
+  flex-shrink:   0;
+}
+.lesson-upload-btn {
+  flex:          1;
+  background:    var(--green);
+  border:        none;
+  border-radius: var(--radius-sm);
+  color:         white;
+  padding:       9px 14px;
+  font-size:     13px;
+  font-weight:   700;
+  font-family:   inherit;
+  cursor:        pointer;
+  transition:    opacity .15s;
+}
+.lesson-upload-btn:disabled { opacity: .6; cursor: default; }
+.lesson-upload-btn:active   { opacity: .85; }
