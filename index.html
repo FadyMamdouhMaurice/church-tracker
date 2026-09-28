@@ -143,6 +143,20 @@
     <!-- Admin-only buttons -->
     <div id="admin-btn-wrap" style="display:none">
       <div class="home-admin-grid">
+        <div id="btn-events"   class="home-admin-card home-admin-card--events">
+          <div class="home-admin-card__icon">📅</div>
+          <div>
+            <div class="home-admin-card__label">الفعاليات</div>
+            <div class="home-admin-card__sub">كرنفال، مؤتمر، رحلة...</div>
+          </div>
+        </div>
+        <div id="btn-reports"  class="home-admin-card home-admin-card--reports">
+          <div class="home-admin-card__icon">📊</div>
+          <div>
+            <div class="home-admin-card__label">التقارير</div>
+            <div class="home-admin-card__sub">شهري، خدام، تصدير PDF</div>
+          </div>
+        </div>
         <div id="btn-admin" class="home-admin-card">
           <div class="home-admin-card__icon">📊</div>
           <div>
@@ -301,6 +315,36 @@
   <button id="mass-save-btn" class="save-fab">💾 حفظ الحضور</button>
 </div>
 
+
+<!-- ═══ EVENTS SCREEN ═══════════════════════════════════ -->
+<div id="events-screen" class="screen">
+  <div class="topbar">
+    <button id="events-back" class="topbar__back">→</button>
+    <h1 id="events-title" class="topbar__title">الفعاليات</h1>
+  </div>
+  <div class="content" id="events-content"></div>
+</div>
+
+<!-- ═══ REPORTS SCREEN ══════════════════════════════════ -->
+<div id="reports-screen" class="screen">
+  <div class="topbar">
+    <button id="reports-back" class="topbar__back">→</button>
+    <h1 class="topbar__title">التقارير</h1>
+  </div>
+  <div class="content">
+    <div class="tab-bar" role="tablist">
+      <button id="rtab-monthly"  class="tab active" role="tab">📅 شهري</button>
+      <button id="rtab-servants" class="tab"        role="tab">🧑‍💼 خدام</button>
+      <button id="rtab-classes"  class="tab"        role="tab">📊 فصول</button>
+      <button id="rtab-export"   class="tab"        role="tab">⬇️ تصدير</button>
+    </div>
+    <div id="rep-monthly"  ></div>
+    <div id="rep-servants"  style="display:none"></div>
+    <div id="rep-classes"   style="display:none"></div>
+    <div id="rep-export"    style="display:none"></div>
+  </div>
+</div>
+
 <!-- ═══ LESSON MODAL ═══════════════════════════════════ -->
 <div id="lesson-modal-overlay" class="modal-overlay hidden">
   <div class="modal lesson-modal">
@@ -337,6 +381,8 @@
 <script src="js/ui/admin.js"></script>
 <script src="js/ui/servant-attendance.js"></script>
 <script src="js/ui/mass-attendance.js"></script>
+<script src="js/ui/events.js"></script>
+<script src="js/ui/reports.js"></script>
 <script src="js/ui/edit-student.js"></script>
 <script src="js/notifications.js"></script>
 <script src="js/updater.js"></script>
