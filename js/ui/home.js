@@ -17,6 +17,13 @@ const HomeScreen = (() => {
     State.on('recordsChanged',     _renderStats);
     State.on('activeClassChanged', _render);
     State.on('userChanged',        _render);
+
+    // Lesson bell
+    Utils.on('lesson-bell-btn',   'click', _openLessonModal);
+    Utils.on('lesson-modal-close','click', _closeLessonModal);
+    Utils.on('lesson-modal-overlay','click', e => {
+      if (e.target.id === 'lesson-modal-overlay') _closeLessonModal();
+    });
   };
 
   const _render = () => {
@@ -40,6 +47,7 @@ const HomeScreen = (() => {
 
     _renderStats();
     _renderBirthdayBanner();
+    _checkLesson();
   };
 
   const _buildClassSwitcher = () => {
@@ -151,6 +159,54 @@ const HomeScreen = (() => {
       <div class="stat-card"><div class="stat-card__num">${needsVisit}</div><div class="stat-card__lbl">ينتظر افتقاد</div></div>
     `);
   };
+
+  // ── Lesson bell ───────────────────────────
+  let _currentLesson = null;
+
+  const _checkLesson = async () => {
+    const user = State.get('user');
+    if (!user) return;
+
+    const wk = Utils.weekKey();
+    try {
+      _currentLesson = await Notifications.getLatestLesson(wk);
+    } catch(e) {
+      _currentLesson = null;
+    }
+
+    const btn = Utils.el('lesson-bell-btn');
+    if (!btn) return;
+
+    if (_currentLesson) {
+      btn.style.display = '';
+      btn.classList.add('lesson-bell-btn--active');
+    } else {
+      btn.style.display = 'none';
+      btn.classList.remove('lesson-bell-btn--active');
+    }
+  };
+
+  const _openLessonModal = () => {
+    if (!_currentLesson) return;
+    const overlay = Utils.el('lesson-modal-overlay');
+    if (!overlay) return;
+
+    Utils.el('lesson-modal-week').textContent  = Utils.weekLabel(_currentLesson.week ?? Utils.weekKey());
+    Utils.el('lesson-modal-title').textContent = _currentLesson.title ?? 'درس هذا الأسبوع';
+    Utils.el('lesson-modal-by').textContent    = _currentLesson.by ? `رفعه: ${_currentLesson.by}` : '';
+
+    const link = Utils.el('lesson-modal-link');
+    if (link) {
+      link.href = _currentLesson.driveUrl ?? CONFIG.drive.lessonFolderUrl;
+    }
+
+    overlay.classList.remove('hidden');
+  };
+
+  const _closeLessonModal = () => {
+    Utils.el('lesson-modal-overlay')?.classList.add('hidden');
+  };
+  // ──────────────────────────────────────────
 
   const _logout = () => { State.setUser(null); Router.go('login'); };
 
