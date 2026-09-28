@@ -96,6 +96,7 @@ const AdminScreen = (() => {
       </div>
       ${_filterClass==='__all__' ? `
         <h3 class="section-title">الحضور بالفصل</h3>
+        <div class="class-stat-rows-grid">
         ${classStats.map(c=>`
           <div class="class-stat-row">
             <div class="class-stat-row__header">
@@ -105,7 +106,8 @@ const AdminScreen = (() => {
             <div class="progress-bar progress-bar--sm">
               <div class="progress-bar__fill" style="width:${c.pct}%"></div>
             </div>
-          </div>`).join('')}` : ''}
+          </div>`).join('')}
+        </div>` : ''}
       <button class="export-btn" id="export-csv-btn">⬇️ تصدير تقرير CSV</button>
     `);
     Utils.on('export-csv-btn','click',()=>Sheets.exportCSV());
