@@ -649,3 +649,16 @@ input, select, textarea { font-family: inherit; color: var(--text); }
 /* ── Empty state ─────────────────────────────── */
 .empty-state { text-align: center; padding: 40px 20px; color: var(--text-2); }
 .empty-state__icon { font-size: 44px; margin-bottom: 10px; }
+
+/* ── Class switcher (admin home) ─────────────── */
+.class-switcher-sel {
+  width:         100%;
+  padding:       10px 14px;
+  border:        1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size:     14px;
+  font-family:   inherit;
+  color:         var(--text);
+  background:    white;
+  outline:       none;
+}

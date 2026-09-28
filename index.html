@@ -41,19 +41,33 @@
       <p class="login-logo__sub">دفعة الأنبا موسى الأسود — إعدادي</p>
     </div>
 
+    <!-- Step 1: Class -->
     <div class="form-group">
-      <label for="login-name">اسمك</label>
-      <input id="login-name" type="text" placeholder="اكتب اسمك الكامل" autocomplete="off">
-    </div>
-    <div class="form-group">
-      <label for="login-class">فصلك</label>
+      <label for="login-class">الفصل</label>
       <select id="login-class">
-        <option value="">— اختار فصلك —</option>
-        <!-- Populated dynamically from Sheets -->
+        <option value="">— اختار الفصل —</option>
       </select>
     </div>
 
-    <button id="login-btn" class="btn btn--primary">دخول ✝</button>
+    <!-- Step 2a: Servant name dropdown -->
+    <div id="login-servant-row" class="form-group" style="display:none">
+      <label for="login-servant">اسمك</label>
+      <select id="login-servant">
+        <option value="">— اختار اسمك —</option>
+      </select>
+    </div>
+
+    <!-- Step 2b: Admin name + password -->
+    <div id="login-name-row" class="form-group" style="display:none">
+      <label for="login-name">اسمك</label>
+      <input id="login-name" type="text" placeholder="اكتب اسمك" autocomplete="off">
+    </div>
+    <div id="login-pass-row" class="form-group" style="display:none">
+      <label for="login-pass">كلمة المرور</label>
+      <input id="login-pass" type="password" placeholder="••••••••">
+    </div>
+
+    <button id="login-btn" class="btn btn--primary" disabled>دخول ✝</button>
     <p id="login-error" class="form-error"></p>
   </div>
 </div>
@@ -64,6 +78,7 @@
     <div class="topbar__title">
       <div class="topbar__sub">كنيسة السيدة العذراء مريم — عزبة النخل</div>
       <div id="home-class-name"></div>
+      <div id="home-class-sub" style="font-size:11px;opacity:.65"></div>
     </div>
     <span id="home-role-badge" class="role-badge"></span>
     <button id="logout-btn" class="topbar__btn">خروج</button>
@@ -113,6 +128,12 @@
       </div>
     </div>
 
+    <div id="class-switcher-wrap" class="form-group" style="display:none;margin-top:8px">
+      <label style="font-size:13px;color:var(--text-2);font-weight:600;display:block;margin-bottom:6px">
+        عرض فصل:
+      </label>
+      <select id="class-switcher" class="class-switcher-sel"></select>
+    </div>
     <p id="db-status" class="db-status"></p>
   </div>
 </div>
@@ -167,16 +188,20 @@
     <h1 class="topbar__title">لوحة أمين الخدمة</h1>
   </div>
   <div class="content">
+    <!-- Class filter -->
+    <div class="form-group" style="margin-bottom:12px">
+      <select id="admin-class-filter" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);background:white;outline:none"></select>
+    </div>
     <div class="tab-bar" role="tablist">
-      <button id="tab-overview"   class="tab active" role="tab">نظرة عامة</button>
-      <button id="tab-att"        class="tab"        role="tab">الحضور</button>
-      <button id="tab-followup"   class="tab"        role="tab">المتابعة</button>
-      <button id="tab-classes"    class="tab"        role="tab">الفصول</button>
+      <button id="tab-overview"  class="tab active" role="tab">عامة</button>
+      <button id="tab-att"       class="tab"        role="tab">الحضور</button>
+      <button id="tab-followup"  class="tab"        role="tab">المتابعة</button>
+      <button id="tab-servants"  class="tab"        role="tab">الخدام</button>
     </div>
     <div id="admin-overview"></div>
     <div id="admin-attendance" style="display:none"></div>
     <div id="admin-followup"   style="display:none"></div>
-    <div id="admin-classes"    style="display:none"></div>
+    <div id="admin-servants"   style="display:none"></div>
   </div>
 </div>
 
