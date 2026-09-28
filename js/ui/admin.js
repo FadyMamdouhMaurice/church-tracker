@@ -4,16 +4,17 @@
 
 const AdminScreen = (() => {
   let _activeTab    = 'overview';
-  let _filterClass  = '__all__'; // class filter for all tabs
+  let _filterClass  = '__all__';
 
   const init = () => {
-    Utils.on('admin-back',      'click', () => Router.back());
-    Utils.on('tab-overview',    'click', () => _switchTab('overview'));
-    Utils.on('tab-att',         'click', () => _switchTab('attendance'));
-    Utils.on('tab-followup',    'click', () => _switchTab('followup'));
-    Utils.on('tab-servants',    'click', () => _switchTab('servants'));
+    Utils.on('admin-back',         'click', () => Router.back());
+    Utils.on('tab-overview',       'click', () => _switchTab('overview'));
+    Utils.on('tab-att',            'click', () => _switchTab('attendance'));
+    Utils.on('tab-followup',       'click', () => _switchTab('followup'));
+    Utils.on('tab-servants',       'click', () => _switchTab('servants'));
+    Utils.on('tab-birthdays',      'click', () => _switchTab('birthdays'));
     Utils.on('admin-class-filter', 'change', _onFilterChange);
-    Utils.on('export-csv-btn',  'click', () => Sheets.exportCSV());
+    Utils.on('export-csv-btn',     'click', () => Sheets.exportCSV());
   };
 
   const _onEnter = () => {
@@ -31,12 +32,9 @@ const AdminScreen = (() => {
 
   const _onFilterChange = () => {
     _filterClass = Utils.el('admin-class-filter').value;
-    // Re-render active tab with new filter
-    const renders = { overview:'overview', attendance:'attendance', followup:'followup', servants:'servants' };
-    _renderTab(renders[_activeTab] ?? 'overview');
+    _renderTab(_activeTab);
   };
 
-  // ── Helpers ───────────────────────────────
   const _filteredStudents = () => {
     const all = State.get('students');
     return _filterClass === '__all__' ? all : all.filter(s => s.cls === _filterClass);
@@ -45,12 +43,12 @@ const AdminScreen = (() => {
   const _switchTab = (tab) => {
     _activeTab = tab;
 
-    // Tab button IDs: tab-overview, tab-att, tab-followup, tab-servants
-    const tabBtnId = { overview:'tab-overview', attendance:'tab-att',
-                       followup:'tab-followup', servants:'tab-servants' };
-    // Content div IDs: admin-overview, admin-attendance, admin-followup, admin-servants
+    const tabBtnId  = { overview:'tab-overview', attendance:'tab-att',
+                        followup:'tab-followup', servants:'tab-servants',
+                        birthdays:'tab-birthdays' };
     const contentId = { overview:'admin-overview', attendance:'admin-attendance',
-                        followup:'admin-followup', servants:'admin-servants' };
+                        followup:'admin-followup', servants:'admin-servants',
+                        birthdays:'admin-birthdays' };
 
     Object.keys(tabBtnId).forEach(t => {
       Utils.el(tabBtnId[t])?.classList.toggle('active', t === tab);
@@ -66,6 +64,7 @@ const AdminScreen = (() => {
       attendance: _renderAttendance,
       followup:   _renderFollowup,
       servants:   _renderServants,
+      birthdays:  _renderBirthdays,
     };
     renders[tab]?.();
   };
@@ -125,7 +124,6 @@ const AdminScreen = (() => {
     const weeks    = Array.from({ length: 6 }, (_, i) => Utils.weekKey(-i));
     const attRecs  = State.get('records').filter(r => r.type === 'attendance');
     const students = _filteredStudents();
-    const classes  = State.get('classes');
 
     const rows = students.map(s => {
       const data     = weeks.map(w => attRecs.find(r => r.studentId === s.id && r.week === w));
@@ -182,10 +180,10 @@ const AdminScreen = (() => {
       const lastV = visits[0]; const lastC = calls[0];
       return {
         s,
-        vd:    lastV ? Utils.daysSince(lastV.date) : 999,
-        cd:    lastC ? Utils.daysSince(lastC.date) : 999,
-        vBy:   lastV?.by ?? '—',
-        cBy:   lastC?.by ?? '—',
+        vd:  lastV ? Utils.daysSince(lastV.date) : 999,
+        cd:  lastC ? Utils.daysSince(lastC.date) : 999,
+        vBy: lastV?.by ?? '—',
+        cBy: lastC?.by ?? '—',
       };
     }).sort((a, b) => b.vd - a.vd);
 
@@ -235,12 +233,11 @@ const AdminScreen = (() => {
     );
 
     const stats = allServants.map(srv => {
-      const mine    = records.filter(r => r.by === srv.name);
-      const att     = mine.filter(r => r.type === 'attendance').length;
-      const call    = mine.filter(r => r.type === 'call').length;
-      const vis     = mine.filter(r => r.type === 'visit').length;
-      const last    = mine.sort((a,b) => b.date.localeCompare(a.date))[0];
-      // Servant own attendance
+      const mine     = records.filter(r => r.by === srv.name);
+      const att      = mine.filter(r => r.type === 'attendance').length;
+      const call     = mine.filter(r => r.type === 'call').length;
+      const vis      = mine.filter(r => r.type === 'visit').length;
+      const last     = mine.sort((a,b) => b.date.localeCompare(a.date))[0];
       const sAtt     = records.filter(r => r.type === 'servant-attendance' && r.servantName === srv.name);
       const sTotal   = sAtt.length;
       const sPresent = sAtt.filter(r => r.present).length;
@@ -282,6 +279,151 @@ const AdminScreen = (() => {
       <p class="table-note">🔴 خادم لم يُسجل أي نشاط بعد</p>
     `);
   };
+
+  // ── Birthdays Dashboard ───────────────────
+  const _renderBirthdays = () => {
+    const students = _filteredStudents();
+    const now      = new Date();
+
+    // Parse birthday → { month (1-based), day, year, dateObj }
+    const withBd = students
+      .map(s => {
+        if (!s.birthday) return null;
+        const d = new Date(s.birthday + 'T00:00:00');
+        if (isNaN(d)) return null;
+        return { s, month: d.getMonth() + 1, day: d.getDate(), year: d.getFullYear(), d };
+      })
+      .filter(Boolean);
+
+    const noBd = students.filter(s => !s.birthday || !withBd.find(x => x.s.id === s.id));
+
+    // ── Weekly view: next 7 days (rolling) ──
+    const weekItems = [];
+    for (let offset = 0; offset <= 6; offset++) {
+      const target = new Date(now);
+      target.setDate(now.getDate() + offset);
+      const tm = target.getMonth() + 1;
+      const td = target.getDate();
+      withBd.forEach(b => {
+        if (b.month === tm && b.day === td) {
+          const age = now.getFullYear() - b.year;
+          weekItems.push({ ...b, offset, age });
+        }
+      });
+    }
+
+    // ── Monthly view: current month ──
+    const thisMonth = now.getMonth() + 1;
+    const monthItems = withBd
+      .filter(b => b.month === thisMonth)
+      .map(b => ({ ...b, age: now.getFullYear() - b.year }))
+      .sort((a, b) => a.day - b.day);
+
+    // ── Next month ──
+    const nextMonthNum = thisMonth === 12 ? 1 : thisMonth + 1;
+    const nextMonthItems = withBd
+      .filter(b => b.month === nextMonthNum)
+      .map(b => ({ ...b, age: now.getFullYear() - b.year + (thisMonth === 12 ? 1 : 0) }))
+      .sort((a, b) => a.day - b.day);
+
+    const clsName = s => State.getClassById(s.cls)?.name?.replace('فصل ', '') ?? '';
+    const dayLabel = offset => offset === 0 ? '🎉 اليوم' : offset === 1 ? 'غداً' : `بعد ${offset} أيام`;
+    const monthName = m => new Date(2000, m - 1, 1).toLocaleDateString('ar-EG', { month: 'long' });
+
+    const bdRow = (b, showDay = false) => `
+      <tr data-id="${b.s.id}" style="cursor:pointer">
+        <td>${b.s.name.split(' ').slice(0, 2).join(' ')}</td>
+        ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(b.s)}</td>` : ''}
+        ${showDay ? `<td class="td--center"><span class="bd-tag ${b.offset === 0 ? 'bd-tag--today' : ''}">${dayLabel(b.offset)}</span></td>` : `<td class="td--center">${b.day}</td>`}
+        <td class="td--center" style="color:var(--text-2)">${b.age} سنة</td>
+      </tr>`;
+
+    Utils.html('admin-birthdays', `
+
+      <!-- ① هذا الأسبوع -->
+      <div class="bd-section">
+        <div class="bd-section__header">📅 هذا الأسبوع (7 أيام)</div>
+        ${weekItems.length === 0
+          ? '<p class="bd-empty">لا توجد أعياد ميلاد هذا الأسبوع</p>'
+          : `<div class="table-wrap">
+              <table class="data-table">
+                <thead><tr>
+                  <th>الاسم</th>
+                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
+                  <th>متى</th><th>السن</th>
+                </tr></thead>
+                <tbody>${weekItems.map(b => bdRow(b, true)).join('')}</tbody>
+              </table>
+            </div>`}
+      </div>
+
+      <!-- ② هذا الشهر -->
+      <div class="bd-section">
+        <div class="bd-section__header">🗓️ ${monthName(thisMonth)} — هذا الشهر
+          <span class="birthday-card__count">${monthItems.length}</span>
+        </div>
+        ${monthItems.length === 0
+          ? '<p class="bd-empty">لا توجد أعياد ميلاد هذا الشهر</p>'
+          : `<div class="table-wrap">
+              <table class="data-table">
+                <thead><tr>
+                  <th>الاسم</th>
+                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
+                  <th>اليوم</th><th>السن</th>
+                </tr></thead>
+                <tbody>${monthItems.map(b => bdRow(b, false)).join('')}</tbody>
+              </table>
+            </div>`}
+      </div>
+
+      <!-- ③ الشهر القادم -->
+      <div class="bd-section">
+        <div class="bd-section__header">⏭️ ${monthName(nextMonthNum)} — الشهر القادم
+          <span class="birthday-card__count">${nextMonthItems.length}</span>
+        </div>
+        ${nextMonthItems.length === 0
+          ? '<p class="bd-empty">لا توجد أعياد ميلاد الشهر القادم</p>'
+          : `<div class="table-wrap">
+              <table class="data-table">
+                <thead><tr>
+                  <th>الاسم</th>
+                  ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
+                  <th>اليوم</th><th>السن</th>
+                </tr></thead>
+                <tbody>${nextMonthItems.map(b => bdRow(b, false)).join('')}</tbody>
+              </table>
+            </div>`}
+      </div>
+
+      <!-- ④ بدون تاريخ ميلاد -->
+      ${noBd.length > 0 ? `
+      <div class="bd-section bd-section--muted">
+        <div class="bd-section__header">⚠️ بدون تاريخ ميلاد (${noBd.length})</div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>الاسم</th>
+              ${_filterClass === '__all__' ? '<th>الفصل</th>' : ''}
+            </tr></thead>
+            <tbody>
+              ${noBd.map(s => `
+                <tr data-id="${s.id}" style="cursor:pointer">
+                  <td>${s.name.split(' ').slice(0, 2).join(' ')}</td>
+                  ${_filterClass === '__all__' ? `<td class="td--muted">${clsName(s)}</td>` : ''}
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>` : ''}
+    `);
+
+    // Click → open profile
+    Utils.el('admin-birthdays')?.addEventListener('click', e => {
+      const row = e.target.closest('tr[data-id]');
+      if (row) ProfileScreen.open(parseInt(row.dataset.id, 10));
+    });
+  };
+  // ─────────────────────────────────────────
 
   Router.onEnter('admin', _onEnter);
 
