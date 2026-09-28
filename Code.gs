@@ -2,6 +2,12 @@
 //  Code.gs — Google Apps Script
 //  Deploy as Web App: Execute as Me, Anyone
 // ─────────────────────────────────────────────
+// @OnlyCurrentDoc — removed to allow Drive access
+
+/**
+ * @fileoverview Apps Script for Church Tracker
+ * Requires: Spreadsheets + Drive
+ */
 
 var SHEET_ID   = '1nChuW3S20fCre9fL7N935EbTfG7AvwQVlCvB4o06TTY';
 var SKIP_TABS  = ['سجل الحضور','سجل المكالمات','سجل الافتقاد','سجل متنوع','إعدادات'];
@@ -24,6 +30,13 @@ var COL = {
   confessor:  12,  // M — أب الاعتراف
   notes:      13,  // N — ملاحظات
 };
+
+// Force Drive scope inclusion in OAuth
+function _authDrive() {
+  // This function is never called externally — it exists to ensure
+  // Apps Script requests Drive permission during authorization
+  DriveApp.getRootFolder();
+}
 
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || 'students';
