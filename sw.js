@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 //  sw.js  —  Service Worker (offline-first PWA)
 //  Version bump here forces cache refresh:
-const VERSION = 'v11';
+const VERSION = 'v12';
 // ─────────────────────────────────────────────
 
 const CACHE_NAME = `church-tracker-${VERSION}`;
@@ -24,13 +24,16 @@ const CACHE_SHELL = [
   './js/ui/profile.js',
   './js/ui/admin.js',
   './js/ui/servant-attendance.js',
+  './js/ui/mass-attendance.js',
   './js/ui/edit-student.js',
+  './js/notifications.js',
   './js/updater.js',
   './js/main.js',
   './manifest.json',
   './icon.svg',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
   'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
+  'https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js',
 ];
 
 // ── Install: cache all shell files ───────────
@@ -72,7 +75,8 @@ self.addEventListener('fetch', event => {
     url.hostname.includes('script.google.com') ||
     url.hostname.includes('googleapis.com') ||
     url.hostname.includes('firebaseio.com') ||
-    url.hostname.includes('firestore.googleapis.com')
+    url.hostname.includes('firestore.googleapis.com') ||
+    url.hostname.includes('fcm.googleapis.com')
   ) {
     event.respondWith(
       fetch(event.request).catch(() =>
