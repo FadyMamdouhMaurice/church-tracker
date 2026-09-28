@@ -90,5 +90,7 @@ const CONFIG = {
   drive: {
     lessonFolderId:  '1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5',
     lessonFolderUrl: 'https://drive.google.com/drive/folders/1X76h60p5TBaZ04BtAcWPC3gsZ832KiT5',
+    photoFolderId:   '11yEaxpNYPMd8Xl2A5LOLuXi-adJvV1Cu',
+    photoFolderUrl:  'https://drive.google.com/drive/folders/11yEaxpNYPMd8Xl2A5LOLuXi-adJvV1Cu',
   },
 };
