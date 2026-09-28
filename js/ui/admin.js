@@ -44,12 +44,19 @@ const AdminScreen = (() => {
 
   const _switchTab = (tab) => {
     _activeTab = tab;
-    ['overview','attendance','followup','servants'].forEach(t => {
-      Utils.el(`tab-${t === 'attendance' ? 'att' : t === 'servants' ? 'servants' : t}`)
-        ?.classList.toggle('active', t === tab);
-      Utils.el(`admin-${t}`)
-        ?.style.setProperty('display', t === tab ? '' : 'none');
+
+    // Tab button IDs: tab-overview, tab-att, tab-followup, tab-servants
+    const tabBtnId = { overview:'tab-overview', attendance:'tab-att',
+                       followup:'tab-followup', servants:'tab-servants' };
+    // Content div IDs: admin-overview, admin-attendance, admin-followup, admin-servants
+    const contentId = { overview:'admin-overview', attendance:'admin-attendance',
+                        followup:'admin-followup', servants:'admin-servants' };
+
+    Object.keys(tabBtnId).forEach(t => {
+      Utils.el(tabBtnId[t])?.classList.toggle('active', t === tab);
+      Utils.el(contentId[t])?.style.setProperty('display', t === tab ? '' : 'none');
     });
+
     _renderTab(tab);
   };
 

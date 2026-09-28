@@ -14,6 +14,7 @@ const HomeScreen = (() => {
 
     State.on('recordsChanged',     _renderStats);
     State.on('activeClassChanged', _render);
+    State.on('userChanged',        _render);
   };
 
   const _render = () => {

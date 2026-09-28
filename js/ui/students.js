@@ -13,6 +13,7 @@ const StudentsScreen = (() => {
 
   const init = () => {
     Utils.on('students-back',   'click', () => Router.back());
+    Utils.el('student-list')?.addEventListener('click', _onClick);
     Utils.on('student-search',  'input', _onSearch);
     State.on('recordsChanged',  _render);
   };
@@ -91,11 +92,6 @@ const StudentsScreen = (() => {
     UI.toast(`تم تسجيل الافتقاد لـ ${s.name.split(' ')[0]}`);
     _render();
   };
-
-  // Wire delegated click on list
-  document.addEventListener('DOMContentLoaded', () => {
-    Utils.el('student-list')?.addEventListener('click', _onClick);
-  });
 
   Router.onEnter('students', _onEnter);
 
