@@ -265,12 +265,10 @@
     <button id="admin-back" class="topbar__back">→</button>
     <h1 class="topbar__title">لوحة أمين الخدمة</h1>
   </div>
-  <div class="content">
-    <!-- Class filter -->
-    <div class="form-group" style="margin-bottom:12px">
-      <select id="admin-class-filter" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--text);background:white;outline:none"></select>
-    </div>
-    <div class="tab-bar" role="tablist">
+  <!-- Sticky filter + tabs bar -->
+  <div class="admin-sticky-bar">
+    <select id="admin-class-filter" class="admin-filter-sel"></select>
+    <div class="tab-bar admin-tab-bar" role="tablist">
       <button id="tab-overview"  class="tab active" role="tab">عامة</button>
       <button id="tab-att"       class="tab"        role="tab">الحضور</button>
       <button id="tab-followup"  class="tab"        role="tab">المتابعة</button>
@@ -279,6 +277,8 @@
       <button id="tab-mass"      class="tab"        role="tab">⛪ القداس</button>
       <button id="tab-lessons"   class="tab"        role="tab">📖 الدروس</button>
     </div>
+  </div><!-- /admin-sticky-bar -->
+  <div class="content admin-content">
     <div id="admin-overview"></div>
     <div id="admin-attendance" style="display:none"></div>
     <div id="admin-followup"   style="display:none"></div>
@@ -286,7 +286,7 @@
     <div id="admin-birthdays"  style="display:none"></div>
     <div id="admin-mass"       style="display:none"></div>
     <div id="admin-lessons"    style="display:none"></div>
-  </div>
+  </div><!-- /admin-content -->
 </div>
 
 
