@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 //  sw.js  —  Service Worker (offline-first PWA)
 //  Version bump here forces cache refresh:
-const VERSION = 'v22';
+const VERSION = 'v23';
 // ─────────────────────────────────────────────
 
 const CACHE_NAME = `church-tracker-${VERSION}`;
@@ -68,6 +68,9 @@ self.addEventListener('message', event => {
 
 // ── Fetch strategy ────────────────────────────
 self.addEventListener('fetch', event => {
+  // Skip non-http requests (chrome-extension://, data:, etc.)
+  if (!event.request.url.startsWith('http')) return;
+
   const url = new URL(event.request.url);
 
   // Network-only: Google APIs (Sheets + Firebase)
@@ -94,9 +97,9 @@ self.addEventListener('fetch', event => {
       if (cached) return cached;
 
       return fetch(event.request).then(response => {
-        if (response?.status === 200) {
+        if (response?.status === 200 && event.request.url.startsWith('http')) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(event.request, clone)).catch(() => {});
         }
         return response;
       });
