@@ -49,6 +49,15 @@ window.addEventListener('load', async () => {
     setTimeout(() => Notifications.requestPermission(), 3000);
   }
 
+  // 12. Preload all student photos in background (non-blocking)
+  // Runs silently after app is ready — no delay for the user
+  if (hasUser && navigator.onLine) {
+    setTimeout(() => _preloadAllPhotos(), 2000);
+  }
+  State.on('userChanged', (user) => {
+    if (user && navigator.onLine) setTimeout(() => _preloadAllPhotos(), 2000);
+  });
+
   // 11. Listen for user login → request permission
   State.on('userChanged', (user) => {
     if (user) setTimeout(() => Notifications.requestPermission(), 2000);
@@ -120,6 +129,36 @@ const _refreshInBackground = async () => {
     const data = await Sheets.loadStudents();
     State.setStudentsData(data);
   } catch { /* silent */ }
+};
+
+// ── Preload all student photos ───────────────
+// Fetches all photo URLs from Firestore in one batch query
+// and caches them in sessionStorage so profiles load instantly
+const _preloadAllPhotos = async () => {
+  try {
+    const snap = await firebase.firestore()
+      .collection('student_photos')
+      .get();
+
+    if (snap.empty) return;
+
+    let loaded = 0;
+    snap.forEach(doc => {
+      const studentId = doc.id;
+      const url       = doc.data()?.url;
+      if (url && !sessionStorage.getItem('photo_' + studentId)) {
+        sessionStorage.setItem('photo_' + studentId, url);
+        // Also preload the image into browser cache
+        const img = new Image();
+        img.src = url;
+        loaded++;
+      }
+    });
+
+    if (loaded > 0) console.log(`[Photos] Preloaded ${loaded} student photos`);
+  } catch(e) {
+    // Silent fail — photos will load on demand
+  }
 };
 
 const _waitForConnection = () => new Promise(resolve => {
