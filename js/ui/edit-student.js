@@ -277,12 +277,10 @@ const EditStudentScreen = (() => {
 
       const data = await res.json();
       console.log('[Photo upload] Cloudinary OK:', data.secure_url);
-
-      // 4. Save URL — use f_auto,q_auto for optimized delivery
-      const photoUrl = data.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_400/');
       sessionStorage.setItem('photo_' + studentId, photoUrl);
 
       // 5. Save URL to Firestore so it persists across sessions
+      const photoUrl = data.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_400/');
       await firebase.firestore().collection('student_photos').doc(String(studentId)).set({
         url:       photoUrl,
         updatedAt: new Date().toISOString(),
