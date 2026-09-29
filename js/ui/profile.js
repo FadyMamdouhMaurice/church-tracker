@@ -53,8 +53,6 @@ const ProfileScreen = (() => {
     const bdSoon  = _isBirthdaySoon(s.birthday);
 
     Utils.el('profile-title').textContent = s.name.split(' ').slice(0, 2).join(' ');
-    // Load photo async (non-blocking)
-    _loadPhoto(s.id);
 
     // Build phones array with labels for call buttons
     const phones = _buildPhones(s);
@@ -154,6 +152,9 @@ const ProfileScreen = (() => {
           : records.slice(0, 20).map(_historyRow).join('')}
       </div>
     `);
+
+    // Load photo AFTER DOM is rendered (profile-avatar element now exists)
+    _loadPhoto(s.id);
 
     Utils.on('p-att-btn',  'click', () => Router.go('attendance'));
     Utils.on('p-edit-btn', 'click', () => EditStudentScreen.open(_currentId));
