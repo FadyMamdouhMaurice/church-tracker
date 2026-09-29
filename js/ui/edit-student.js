@@ -206,7 +206,7 @@ const EditStudentScreen = (() => {
   // ── Photo helpers ─────────────────────────
   const _loadCurrentPhoto = async (studentId) => {
     // 1. Check session cache first (fastest)
-    const cached = sessionStorage.getItem('photo_' + studentId);
+    const cached = localStorage.getItem('photo_' + studentId);
     if (cached) { _showPreview(cached); return; }
 
     // 2. Check Firestore for saved photo URL
@@ -215,7 +215,7 @@ const EditStudentScreen = (() => {
         .collection('student_photos').doc(String(studentId)).get();
       if (doc.exists) {
         const url = doc.data().url;
-        sessionStorage.setItem('photo_' + studentId, url);
+        localStorage.setItem('photo_' + studentId, url);
         _showPreview(url);
       }
     } catch(e) {
@@ -277,7 +277,7 @@ const EditStudentScreen = (() => {
 
       const data = await res.json();
       console.log('[Photo upload] Cloudinary OK:', data.secure_url);
-      sessionStorage.setItem('photo_' + studentId, photoUrl);
+      localStorage.setItem('photo_' + studentId, photoUrl);
 
       // 5. Save URL to Firestore so it persists across sessions
       const photoUrl = data.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_400/');
