@@ -219,7 +219,7 @@ const ProfileScreen = (() => {
     if (!avatar) return;
 
     // 1. Session cache (instant — set right after upload)
-    const cached = sessionStorage.getItem('photo_' + studentId);
+    const cached = localStorage.getItem('photo_' + studentId);
     if (cached) { _applyPhoto(avatar, cached); return; }
 
     // 2. Firestore — persistent across sessions/devices
@@ -228,7 +228,7 @@ const ProfileScreen = (() => {
         .collection('student_photos').doc(String(studentId)).get();
       if (doc.exists) {
         const url = doc.data().url;
-        sessionStorage.setItem('photo_' + studentId, url);
+        localStorage.setItem('photo_' + studentId, url);
         // Re-get avatar since render may have refreshed the DOM
         const av = Utils.el('profile-avatar');
         if (av) _applyPhoto(av, url);
