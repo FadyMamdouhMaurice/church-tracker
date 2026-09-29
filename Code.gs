@@ -38,6 +38,12 @@ function _authDrive() {
   DriveApp.getRootFolder();
 }
 
+// Handle CORS preflight
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.TEXT);
+}
+
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) || 'students';
   var result = action === 'students' ? getStudents() : { error: 'unknown action' };
