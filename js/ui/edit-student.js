@@ -204,11 +204,23 @@ const EditStudentScreen = (() => {
   };
 
   // ── Photo helpers ─────────────────────────
-  const _loadCurrentPhoto = (studentId) => {
-    // Only show photo if already cached from a previous upload this session
+  const _loadCurrentPhoto = async (studentId) => {
+    // 1. Check session cache first (fastest)
     const cached = sessionStorage.getItem('photo_' + studentId);
-    if (cached) { _showPreview(cached); }
-    // No network call — avoids 404 for students without photos
+    if (cached) { _showPreview(cached); return; }
+
+    // 2. Check Firestore for saved photo URL
+    try {
+      const doc = await firebase.firestore()
+        .collection('student_photos').doc(String(studentId)).get();
+      if (doc.exists) {
+        const url = doc.data().url;
+        sessionStorage.setItem('photo_' + studentId, url);
+        _showPreview(url);
+      }
+    } catch(e) {
+      // No photo saved — keep initials, fail silently
+    }
   };
 
   const _onPhotoSelected = (e) => {
@@ -229,67 +241,59 @@ const EditStudentScreen = (() => {
       onerror="this.parentElement.innerHTML='<div class=\"photo-upload-initials\">?</div>'">`;
   };
 
+  // ── Upload to Cloudinary (direct, no backend needed) ──
   const _uploadPhoto = async (studentId) => {
     if (!_photoFile) return;
     const status = Utils.el('photo-status');
     if (status) status.textContent = '⏫ جارٍ ضغط وتحميل الصورة...';
 
     try {
-      // Step 1: Compress image to max 400px, JPEG quality 0.7
-      const compressed = await _compressImage(_photoFile, 400, 0.7);
-      const base64     = compressed.split(',')[1];
+      // 1. Compress to max 500px, JPEG 0.8
+      const compressed = await _compressImage(_photoFile, 500, 0.8);
+      const blob       = await (await fetch(compressed)).blob();
 
-      console.log('[Photo upload] size:', Math.round(base64.length / 1024), 'KB');
+      // 2. Build FormData for Cloudinary unsigned upload
+      const form = new FormData();
+      form.append('file',           blob, 'photo.jpg');
+      form.append('upload_preset',  CONFIG.cloudinary.uploadPreset);
+      form.append('public_id',      `students/student_${studentId}`);
+      form.append('overwrite',      'true');
 
-      // Step 2: Upload via Apps Script
-      // Must use no-cors for POST to Apps Script (CORS limitation)
-      // We use a workaround: encode as URL params in a GET request
-      const params = new URLSearchParams({
-        action:     'uploadPhoto',
-        studentId:  studentId,
-        mimeType:   'image/jpeg',
-        base64Data: base64,
+      if (status) status.textContent = '⏫ جارٍ الرفع على Cloudinary...';
+
+      // 3. Upload directly to Cloudinary — no backend, free CORS
+      const res  = await fetch(CONFIG.cloudinary.uploadUrl, {
+        method: 'POST',
+        body:   form,
       });
 
-      // Apps Script GET has URL length limit — use POST with text/plain + mode cors
-      const response = await fetch(CONFIG.sheets.scriptUrl, {
-        method:    'POST',
-        mode:      'cors',
-        headers:   { 'Content-Type': 'text/plain;charset=utf-8' },
-        body:      JSON.stringify({
-          action:     'uploadPhoto',
-          studentId,
-          base64Data: base64,
-          mimeType:   'image/jpeg',
-        }),
-        redirect:  'follow',
+      if (!res.ok) throw new Error(`Cloudinary HTTP ${res.status}`);
+
+      const data = await res.json();
+      console.log('[Photo upload] Cloudinary OK:', data.secure_url);
+
+      // 4. Save URL — use f_auto,q_auto for optimized delivery
+      const photoUrl = data.secure_url.replace('/upload/', '/upload/f_auto,q_auto,w_400/');
+      sessionStorage.setItem('photo_' + studentId, photoUrl);
+
+      // 5. Save URL to Firestore so it persists across sessions
+      await firebase.firestore().collection('student_photos').doc(String(studentId)).set({
+        url:       photoUrl,
+        updatedAt: new Date().toISOString(),
+        by:        State.get('user')?.displayName ?? '',
       });
 
-      const text = await response.text();
-      console.log('[Photo upload] response:', text.slice(0, 300));
+      _photoFile = null;
+      if (status) status.textContent = '✅ تم رفع الصورة بنجاح!';
+      UI.toast('✅ تم رفع صورة المخدوم');
 
-      // Apps Script sometimes redirects and returns HTML — detect it
-      if (text.trim().startsWith('<')) {
-        throw new Error('Apps Script returned HTML — possible auth redirect. Check deployment.');
-      }
-
-      const data = JSON.parse(text);
-
-      if (data.url) {
-        sessionStorage.setItem('photo_' + studentId, data.url);
-        _photoFile = null;
-        if (status) status.textContent = '✅ تم رفع الصورة بنجاح!';
-        UI.toast('✅ تم رفع صورة المخدوم');
-      } else {
-        throw new Error(data.error ?? JSON.stringify(data));
-      }
     } catch(e) {
       console.error('[Photo upload]', e.message);
-      if (status) status.textContent = '❌ ' + e.message;
+      if (status) status.textContent = '❌ فشل الرفع: ' + e.message;
     }
   };
 
-  // Compress image to max dimension + JPEG quality
+  // ── Compress image before upload ───────────
   const _compressImage = (file, maxDim, quality) => new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -300,8 +304,7 @@ const EditStudentScreen = (() => {
       const h      = Math.round(img.height * scale);
       const canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       resolve(canvas.toDataURL('image/jpeg', quality));
     };
     img.onerror = reject;
