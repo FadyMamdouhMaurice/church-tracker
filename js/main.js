@@ -146,8 +146,8 @@ const _preloadAllPhotos = async () => {
     snap.forEach(doc => {
       const studentId = doc.id;
       const url       = doc.data()?.url;
-      if (url && !sessionStorage.getItem('photo_' + studentId)) {
-        sessionStorage.setItem('photo_' + studentId, url);
+      if (url && !localStorage.getItem('photo_' + studentId)) {
+        localStorage.setItem('photo_' + studentId, url);
         // Also preload the image into browser cache
         const img = new Image();
         img.src = url;
