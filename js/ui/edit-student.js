@@ -253,11 +253,12 @@ const EditStudentScreen = (() => {
       const blob       = await (await fetch(compressed)).blob();
 
       // 2. Build FormData for Cloudinary unsigned upload
+      // Note: public_id with folders requires folder creation to be enabled in preset
       const form = new FormData();
-      form.append('file',           blob, 'photo.jpg');
-      form.append('upload_preset',  CONFIG.cloudinary.uploadPreset);
-      form.append('public_id',      `students/student_${studentId}`);
-      form.append('overwrite',      'true');
+      form.append('file',          blob, 'photo.jpg');
+      form.append('upload_preset', CONFIG.cloudinary.uploadPreset);
+      form.append('tags',          `student_${studentId}`);
+      // Don't set public_id — let Cloudinary auto-generate, we track via Firestore
 
       if (status) status.textContent = '⏫ جارٍ الرفع على Cloudinary...';
 
@@ -267,7 +268,12 @@ const EditStudentScreen = (() => {
         body:   form,
       });
 
-      if (!res.ok) throw new Error(`Cloudinary HTTP ${res.status}`);
+      // Log full error if not OK
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('[Photo upload] Cloudinary error:', errText);
+        throw new Error(`Cloudinary ${res.status}: ${errText.slice(0, 200)}`);
+      }
 
       const data = await res.json();
       console.log('[Photo upload] Cloudinary OK:', data.secure_url);
