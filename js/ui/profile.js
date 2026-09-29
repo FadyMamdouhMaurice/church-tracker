@@ -217,12 +217,22 @@ const ProfileScreen = (() => {
     const avatar = Utils.el('profile-avatar');
     if (!avatar) return;
 
-    // Only use cached photo (set after a successful upload this session)
+    // 1. Session cache (instant)
     const cached = sessionStorage.getItem('photo_' + studentId);
-    if (cached) {
-      _applyPhoto(avatar, cached);
+    if (cached) { _applyPhoto(avatar, cached); return; }
+
+    // 2. Firestore — persistent across sessions
+    try {
+      const doc = await firebase.firestore()
+        .collection('student_photos').doc(String(studentId)).get();
+      if (doc.exists) {
+        const url = doc.data().url;
+        sessionStorage.setItem('photo_' + studentId, url);
+        _applyPhoto(avatar, url);
+      }
+    } catch(e) {
+      // No photo — keep initials
     }
-    // No network call — photos are shown only after upload
   };
 
   const _applyPhoto = (avatar, url) => {
