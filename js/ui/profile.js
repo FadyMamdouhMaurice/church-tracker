@@ -217,21 +217,23 @@ const ProfileScreen = (() => {
     const avatar = Utils.el('profile-avatar');
     if (!avatar) return;
 
-    // 1. Session cache (instant)
+    // 1. Session cache (instant — set right after upload)
     const cached = sessionStorage.getItem('photo_' + studentId);
     if (cached) { _applyPhoto(avatar, cached); return; }
 
-    // 2. Firestore — persistent across sessions
+    // 2. Firestore — persistent across sessions/devices
     try {
       const doc = await firebase.firestore()
         .collection('student_photos').doc(String(studentId)).get();
       if (doc.exists) {
         const url = doc.data().url;
         sessionStorage.setItem('photo_' + studentId, url);
-        _applyPhoto(avatar, url);
+        // Re-get avatar since render may have refreshed the DOM
+        const av = Utils.el('profile-avatar');
+        if (av) _applyPhoto(av, url);
       }
     } catch(e) {
-      // No photo — keep initials
+      // No photo — keep initials, fail silently
     }
   };
 
