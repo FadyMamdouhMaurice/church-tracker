@@ -232,35 +232,48 @@ const EditStudentScreen = (() => {
   const _uploadPhoto = async (studentId) => {
     if (!_photoFile) return;
     const status = Utils.el('photo-status');
-    if (status) status.textContent = '⏫ جارٍ رفع الصورة...';
+    if (status) status.textContent = '⏫ جارٍ ضغط وتحميل الصورة...';
 
     try {
-      // Convert file to base64
-      const base64 = await new Promise((res, rej) => {
-        const reader = new FileReader();
-        reader.onload  = (e) => res(e.target.result.split(',')[1]);
-        reader.onerror = rej;
-        reader.readAsDataURL(_photoFile);
+      // Step 1: Compress image to max 400px, JPEG quality 0.7
+      const compressed = await _compressImage(_photoFile, 400, 0.7);
+      const base64     = compressed.split(',')[1];
+
+      console.log('[Photo upload] size:', Math.round(base64.length / 1024), 'KB');
+
+      // Step 2: Upload via Apps Script
+      // Must use no-cors for POST to Apps Script (CORS limitation)
+      // We use a workaround: encode as URL params in a GET request
+      const params = new URLSearchParams({
+        action:     'uploadPhoto',
+        studentId:  studentId,
+        mimeType:   'image/jpeg',
+        base64Data: base64,
       });
 
+      // Apps Script GET has URL length limit — use POST with text/plain + mode cors
       const response = await fetch(CONFIG.sheets.scriptUrl, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify({
+        method:    'POST',
+        mode:      'cors',
+        headers:   { 'Content-Type': 'text/plain;charset=utf-8' },
+        body:      JSON.stringify({
           action:     'uploadPhoto',
           studentId,
           base64Data: base64,
-          mimeType:   _photoFile.type || 'image/jpeg',
-          fileName:   `student_${studentId}.jpg`,
+          mimeType:   'image/jpeg',
         }),
+        redirect:  'follow',
       });
 
       const text = await response.text();
-      console.log('[Photo upload] raw response:', text.slice(0, 200));
+      console.log('[Photo upload] response:', text.slice(0, 300));
 
-      let data;
-      try { data = JSON.parse(text); }
-      catch(e) { throw new Error('Response not JSON: ' + text.slice(0, 100)); }
+      // Apps Script sometimes redirects and returns HTML — detect it
+      if (text.trim().startsWith('<')) {
+        throw new Error('Apps Script returned HTML — possible auth redirect. Check deployment.');
+      }
+
+      const data = JSON.parse(text);
 
       if (data.url) {
         sessionStorage.setItem('photo_' + studentId, data.url);
@@ -268,15 +281,32 @@ const EditStudentScreen = (() => {
         if (status) status.textContent = '✅ تم رفع الصورة بنجاح!';
         UI.toast('✅ تم رفع صورة المخدوم');
       } else {
-        const errMsg = data.error ?? JSON.stringify(data);
-        console.error('[Photo upload] error:', errMsg);
-        if (status) status.textContent = '❌ ' + errMsg;
+        throw new Error(data.error ?? JSON.stringify(data));
       }
     } catch(e) {
-      if (status) status.textContent = '❌ فشل الاتصال';
-      console.warn('[Photo upload]', e);
+      console.error('[Photo upload]', e.message);
+      if (status) status.textContent = '❌ ' + e.message;
     }
   };
+
+  // Compress image to max dimension + JPEG quality
+  const _compressImage = (file, maxDim, quality) => new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale  = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w      = Math.round(img.width  * scale);
+      const h      = Math.round(img.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = reject;
+    img.src     = url;
+  });
   // ─────────────────────────────────────────
 
   Router.onEnter('edit', _onEnter);
