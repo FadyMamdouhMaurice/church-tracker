@@ -76,11 +76,13 @@ const ProfileScreen = (() => {
         ${bdFormatted ? `<p class="profile-header__birthday">🎂 ${bdFormatted}</p>` : ''}
       </div>
 
-      <div class="action-row action-row--4">
+      <div class="action-row ${user?.role === 'admin' ? 'action-row--5' : 'action-row--4'}">
         <button class="action-btn action-btn--att"   id="p-att-btn"> <span>📋</span> حضور   </button>
         <button class="action-btn action-btn--call"  id="p-call-btn"><span>📞</span> مكالمة </button>
         <button class="action-btn action-btn--visit" id="p-vis-btn"> <span>🏠</span> افتقاد </button>
         <button class="action-btn action-btn--edit"  id="p-edit-btn"><span>✏️</span> تعديل  </button>
+        ${user?.role === 'admin' ? `
+        <button class="action-btn action-btn--transfer" id="p-transfer-btn"><span>🔀</span> نقل</button>` : ''}
       </div>
 
       <!-- ① الاتصال السريع -->
@@ -186,10 +188,11 @@ const ProfileScreen = (() => {
     // Load photo AFTER DOM is rendered (profile-avatar element now exists)
     _loadPhoto(s.id);
 
-    Utils.on('p-att-btn',  'click', () => Router.go('attendance'));
-    Utils.on('p-edit-btn', 'click', () => EditStudentScreen.open(_currentId));
-    Utils.on('p-call-btn', 'click', () => _logCall());
-    Utils.on('p-vis-btn',  'click', () => _logWithNote('visit'));
+    Utils.on('p-att-btn',      'click', () => Router.go('attendance'));
+    Utils.on('p-edit-btn',     'click', () => EditStudentScreen.open(_currentId));
+    Utils.on('p-call-btn',     'click', () => _logCall());
+    Utils.on('p-vis-btn',      'click', () => _logWithNote('visit'));
+    Utils.on('p-transfer-btn', 'click', () => _showTransferModal());
   };
 
   // Build phones list with labels, filtering empty
@@ -274,6 +277,84 @@ const ProfileScreen = (() => {
     avatar.classList.add('profile-header__avatar--photo');
   };
   // ─────────────────────────────────────────
+
+  // ── Transfer student to another class ───────
+  const _showTransferModal = async () => {
+    const s      = State.getStudentById(_currentId);
+    const curCls = State.getClassById(s.cls);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <h3 class="modal__title">🔀 نقل ${s.name.split(' ')[0]} لفصل تاني</h3>
+        <p style="font-size:13px;color:var(--text-2);margin-bottom:12px">
+          الفصل الحالي: <b>${curCls?.name ?? s.cls}</b>
+        </p>
+        <div class="form-group">
+          <label>الفصل الجديد</label>
+          <select id="transfer-cls-sel" class="class-switcher-sel">
+            ${CONFIG.classes
+              .filter(c => c.id !== s.cls)
+              .map(c => `<option value="${c.id}">${c.name}</option>`)
+              .join('')}
+          </select>
+        </div>
+        <p id="transfer-err" style="color:var(--red);font-size:13px;min-height:16px"></p>
+        <div class="modal__btns">
+          <button class="btn btn--gray"    id="transfer-cancel">إلغاء</button>
+          <button class="btn btn--primary" id="transfer-confirm">نقل ✓</button>
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+    Utils.on('transfer-cancel', 'click', () => overlay.remove());
+
+    Utils.on('transfer-confirm', 'click', async () => {
+      const toClsId  = Utils.el('transfer-cls-sel')?.value;
+      const toCls    = CONFIG.classes.find(c => c.id === toClsId);
+      const fromCls  = curCls;
+      const errEl    = Utils.el('transfer-err');
+      const btn      = Utils.el('transfer-confirm');
+
+      if (!toClsId) return;
+
+      btn.disabled    = true;
+      btn.textContent = 'جارٍ النقل…';
+
+      try {
+        const res  = await fetch(CONFIG.sheets.scriptUrl, {
+          method:  'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body:    JSON.stringify({
+            action:      'transferStudent',
+            studentName: s.name,
+            fromClass:   fromCls?.name ?? s.cls.replace(/_/g,' '),
+            toClass:     toCls?.name   ?? toClsId.replace(/_/g,' '),
+          }),
+        });
+        const data = await res.json();
+
+        if (data.status === 'transferred') {
+          overlay.remove();
+          UI.toast(`✅ تم نقل ${s.name.split(' ')[0]} إلى ${toCls?.name}`);
+          // Reload students to reflect change
+          await Sheets.loadStudents();
+          Router.go('home');
+        } else {
+          if(errEl) errEl.textContent = '❌ ' + (data.error ?? 'خطأ');
+          btn.disabled    = false;
+          btn.textContent = 'نقل ✓';
+        }
+      } catch(e) {
+        if(errEl) errEl.textContent = '❌ فشل الاتصال';
+        btn.disabled    = false;
+        btn.textContent = 'نقل ✓';
+      }
+    });
+  };
+  // ─────────────────────────────────────────────
 
   Router.onEnter('profile', _onEnter);
 
