@@ -8,7 +8,6 @@ const Updater = (() => {
     if (!('serviceWorker' in navigator)) return;
 
     navigator.serviceWorker.ready.then(reg => {
-      // Check for update every 60 seconds (handles long sessions)
       setInterval(() => reg.update(), 60_000);
 
       reg.addEventListener('updatefound', () => {
@@ -21,9 +20,13 @@ const Updater = (() => {
       });
     });
 
-    // When SW activates new version, reload to get fresh files
+    // Only reload on controllerchange if it was triggered by user pressing "Update"
+    // NOT on every page load (prevents infinite reload loop)
+    let _reloadPending = false;
+    window._triggerSWReload = () => { _reloadPending = true; };
+
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload();
+      if (_reloadPending) window.location.reload();
     });
   };
 
@@ -78,6 +81,7 @@ const Updater = (() => {
 
     document.getElementById('update-now-btn').addEventListener('click', () => {
       banner.remove();
+      window._triggerSWReload();
       newSW.postMessage({ type: 'SKIP_WAITING' });
     });
 
