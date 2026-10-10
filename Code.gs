@@ -88,7 +88,9 @@ function getStudents() {
 
         students.push({
           id:        id++,
-          cls:       classId,
+          cls:       (clean(r[COL.newClass]) && nameToId(clean(r[COL.newClass])) !== classId)
+                       ? nameToId(clean(r[COL.newClass]))
+                       : classId,
           name:      sName,
           birthday:  cleanDate(r[COL.birthday]),
           address:   clean(r[COL.address]),
@@ -302,38 +304,30 @@ function getStudentPhoto(studentId) {
 }
 
 // ── Transfer student to another class ────────
+// Strategy: update column C (newClass) only — keeps studentId intact
+// so ALL history (attendance, calls, visits) stays linked
 // POST { action:'transferStudent', studentName, fromClass, toClass }
 function transferStudent(params) {
   try {
     var ss        = SpreadsheetApp.openById(SHEET_ID);
     var fromSheet = ss.getSheetByName(params.fromClass);
-    var toSheet   = ss.getSheetByName(params.toClass);
 
     if (!fromSheet) return { error: 'الفصل القديم غير موجود: ' + params.fromClass };
-    if (!toSheet)   return { error: 'الفصل الجديد غير موجود: ' + params.toClass };
 
     // Find student row in source sheet
     var rows     = fromSheet.getDataRange().getValues();
     var rowIndex = -1;
     for (var i = 1; i < rows.length; i++) {
       if (String(rows[i][COL.name]).trim() === String(params.studentName).trim()) {
-        rowIndex = i;
+        rowIndex = i + 1; // 1-based
         break;
       }
     }
-    if (rowIndex === -1) return { error: 'المخدوم غير موجود في الفصل: ' + params.studentName };
+    if (rowIndex === -1) return { error: 'المخدوم غير موجود: ' + params.studentName };
 
-    // Copy row data
-    var studentRow = rows[rowIndex].slice(); // clone
-
-    // Update newClass column to reflect new class
-    studentRow[COL.newClass] = params.toClass;
-
-    // Append to destination sheet
-    toSheet.appendRow(studentRow);
-
-    // Delete from source sheet (delete the row entirely)
-    fromSheet.deleteRow(rowIndex + 1); // +1 because sheets are 1-based
+    // Only update column C (newClass) — studentId stays the same
+    // The app reads newClass to determine which class the student belongs to
+    fromSheet.getRange(rowIndex, COL.newClass + 1).setValue(params.toClass);
 
     return { status: 'transferred', from: params.fromClass, to: params.toClass };
   } catch(err) {
