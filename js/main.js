@@ -30,10 +30,10 @@ window.addEventListener('load', async () => {
   // 4. Hydrate state from localStorage
   const { hasUser, hasStudents, cacheAge } = State.hydrate();
 
-  // 5. Show loading screen
+  // 5. Show loading screen — always stay here until data is ready
   Router.go('loading');
 
-  // 6. Load students
+  // 6. Load students — ALWAYS wait for completion before navigating
   await _bootStudents(hasStudents, cacheAge);
 
   // 7. Flush any pending offline writes
@@ -45,7 +45,9 @@ window.addEventListener('load', async () => {
   // 8.5 Init servant management (needs Firebase to be ready)
   ServantManagement.init(); // non-blocking, has its own retry logic
 
-  // 9. Navigate
+  // 9. Navigate — only after students are loaded
+  const studentCount = State.get('students')?.length ?? 0;
+  console.log('[Main] Navigating to home with', studentCount, 'students');
   Router.go(hasUser ? 'home' : 'login');
 
   // 10. Request notification permission after short delay (non-blocking)
@@ -77,19 +79,14 @@ const _registerSW = () => {
 
 // ── Student loading strategy ──────────────────
 const _bootStudents = async (hasCache, cacheAgeMin) => {
-  const FRESH = 10; // minutes
-
+  const FRESH = 30; // minutes — use cache only if very fresh
   const cachedStudentCount = State.get('students')?.length ?? 0;
 
-  if (hasCache && cacheAgeMin < FRESH && cachedStudentCount > 0) {
-    // Fresh cache with real data — use immediately, refresh silently
-    _refreshInBackground();
+  // Only skip network if cache is fresh AND has real student data
+  if (hasCache && cacheAgeMin < FRESH && cachedStudentCount > 0 && !navigator.onLine) {
+    // Offline with fresh cache — use cache
+    _showOfflineStatus();
     return;
-  }
-
-  // Cache empty or stale — force full reload
-  if (hasCache && cachedStudentCount === 0) {
-    console.log('[Boot] Cache has 0 students — forcing reload');
   }
 
   if (hasCache && !navigator.onLine) {
