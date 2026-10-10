@@ -268,6 +268,7 @@ const ServantManagement = (() => {
   // ── Apply servant config overrides to CONFIG ──
   const _reloadServantConfig = async () => {
     try {
+      if (!firebase?.firestore) return;
       const snap = await firebase.firestore().collection('servant_config').get();
       snap.forEach(doc => {
         const { classId, deleted } = doc.data();
@@ -295,8 +296,19 @@ const ServantManagement = (() => {
   };
 
   // ── Init: load servant config overrides on app start ──
+  // Must wait for Firebase to be initialized before calling Firestore
   const init = async () => {
-    await _reloadServantConfig();
+    // Wait until firebase is ready (up to 3 seconds)
+    for (let i = 0; i < 10; i++) {
+      try {
+        if (firebase?.firestore) {
+          await _reloadServantConfig();
+          return;
+        }
+      } catch(e) {}
+      await new Promise(r => setTimeout(r, 300));
+    }
+    console.warn('[ServantMgmt] Firebase not ready — skipping init');
   };
 
   return { init, showModal };
