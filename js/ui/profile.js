@@ -190,6 +190,24 @@ const ProfileScreen = (() => {
     _loadPhoto(s.id);
 
     Utils.on('p-att-btn',      'click', () => Router.go('attendance'));
+
+    // Delete record (admin only)
+    Utils.el('profile-content')?.addEventListener('click', async e => {
+      const btn = e.target.closest('.history-delete-btn');
+      if (!btn) return;
+      const recordId = btn.dataset.recordId;
+      if (!recordId) return;
+      if (!confirm('حذف هذا السجل نهائياً؟')) return;
+      try {
+        await firebase.firestore().collection('records').doc(recordId).delete();
+        // Remove from local state
+        const updated = State.get('records').filter(r => r.id !== recordId);
+        State.setRecords(updated);
+        UI.toast('✅ تم حذف السجل');
+      } catch(e) {
+        UI.toast('❌ فشل الحذف: ' + e.message);
+      }
+    });
     Utils.on('p-edit-btn',     'click', () => EditStudentScreen.open(_currentId));
     Utils.on('p-call-btn',     'click', () => _logCall());
     Utils.on('p-vis-btn',      'click', () => _logWithNote('visit'));
@@ -214,15 +232,21 @@ const ProfileScreen = (() => {
     return list;
   };
 
-  const _historyRow = (r) => `
-    <div class="history-row">
+  const _historyRow = (r) => {
+    const isAdmin = State.get('user')?.role === 'admin';
+    return `
+    <div class="history-row" data-record-id="${r.fsId ?? ''}">
       <span class="history-row__date">${Utils.formatDate(r.date)}</span>
       <div class="history-row__body">
         ${UI.recordBadge(r)}
         ${r.note ? `<p class="history-row__note">${r.note}</p>` : ''}
         <p class="history-row__by">بواسطة: ${r.by ?? '—'}</p>
       </div>
+      ${isAdmin && r.fsId ? `
+        <button class="history-delete-btn" data-record-id="${r.fsId}" title="حذف">🗑️</button>
+      ` : ''}
     </div>`;
+  };
 
   // Call = phone followup → always prompt for note
   const _logCall = async () => {
