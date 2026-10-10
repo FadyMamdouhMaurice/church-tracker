@@ -15,11 +15,15 @@ const AdminScreen = (() => {
     Utils.on('tab-birthdays',      'click', () => _switchTab('birthdays'));
     Utils.on('tab-mass',           'click', () => _switchTab('mass'));
     Utils.on('tab-lessons',        'click', () => _switchTab('lessons'));
+    Utils.on('servant-mgmt-btn',    'click', () => ServantManagement.showModal());
     Utils.on('admin-class-filter', 'change', _onFilterChange);
     Utils.on('export-csv-btn',     'click', () => Sheets.exportCSV());
   };
 
   const _onEnter = () => {
+    State.on('configChanged', () => {
+      if (_activeTab === 'servants') _renderServants();
+    });
     _filterClass = '__all__';
     _buildFilter();
     _switchTab('overview');
