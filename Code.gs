@@ -105,8 +105,8 @@ function getStudents() {
           deacon:    r[COL.deacon] === true || String(r[COL.deacon]).toUpperCase() === 'TRUE',
           confessor: clean(r[COL.confessor]),
           notes:     clean(r[COL.notes]),
-          area:      clean(r[COL.area]),
-          lordsBrethren: r[COL.lordsBrethren] === true || String(r[COL.lordsBrethren]).toUpperCase() === 'TRUE',
+          area:         r.length > COL.area          ? clean(r[COL.area]) : '',
+          lordsBrethren: r.length > COL.lordsBrethren ? (r[COL.lordsBrethren] === true || String(r[COL.lordsBrethren]).toUpperCase() === 'TRUE') : false,
         });
       }
     });
