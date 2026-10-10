@@ -112,7 +112,7 @@
 
     <!-- Main actions -->
     <h2 class="section-title">الخدمات</h2>
-    <div class="home-actions-grid has-5">
+    <div class="home-actions-grid has-6">
       <div id="btn-att" class="home-action-card home-action-card--att">
         <div class="home-action-card__icon">📋</div>
         <div class="home-action-card__label">تسجيل الحضور</div>
@@ -132,6 +132,11 @@
         <div class="home-action-card__icon">👦</div>
         <div class="home-action-card__label">ملفات الأولاد</div>
         <div class="home-action-card__sub">بيانات وتاريخ</div>
+      </div>
+      <div id="btn-add-student" class="home-action-card home-action-card--add">
+        <div class="home-action-card__icon">➕</div>
+        <div class="home-action-card__label">إضافة مخدوم</div>
+        <div class="home-action-card__sub">مخدوم جديد</div>
       </div>
           <div id="btn-mass" class="home-action-card home-action-card--mass">
         <div class="home-action-card__icon">⛪</div>
@@ -345,6 +350,16 @@
   </div>
 </div>
 
+<!-- ═══ ADD STUDENT SCREEN ═══════════════════════════════ -->
+<div id="add-student-screen" class="screen">
+  <div class="topbar">
+    <button id="add-student-back" class="topbar__back">→</button>
+    <h1 class="topbar__title">إضافة مخدوم جديد</h1>
+    <button id="add-student-save" class="topbar__btn">إضافة المخدوم ✓</button>
+  </div>
+  <div class="content" id="add-student-content"></div>
+</div>
+
 <!-- ═══ LESSON MODAL ═══════════════════════════════════ -->
 <div id="lesson-modal-overlay" class="modal-overlay hidden">
   <div class="modal lesson-modal">
@@ -381,6 +396,7 @@
 <script src="js/ui/admin.js"></script>
 <script src="js/ui/servant-attendance.js"></script>
 <script src="js/ui/mass-attendance.js"></script>
+<script src="js/ui/add-student.js"></script>
 <script src="js/ui/events.js"></script>
 <script src="js/ui/reports.js"></script>
 <script src="js/ui/edit-student.js"></script>
