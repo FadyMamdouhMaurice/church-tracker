@@ -29,6 +29,8 @@ var COL = {
   deacon:     11,  // L — الشمامسة
   confessor:  12,  // M — أب الاعتراف
   notes:      13,  // N — ملاحظات
+  area:       14,  // O — المنطقة       ← NEW
+  lordsBrethren: 15, // P — أخوة الرب  ← NEW
 };
 
 // Force Drive scope inclusion in OAuth
@@ -99,6 +101,8 @@ function getStudents() {
           deacon:    r[COL.deacon] === true || String(r[COL.deacon]).toUpperCase() === 'TRUE',
           confessor: clean(r[COL.confessor]),
           notes:     clean(r[COL.notes]),
+          area:      clean(r[COL.area]),
+          lordsBrethren: r[COL.lordsBrethren] === true || String(r[COL.lordsBrethren]).toUpperCase() === 'TRUE',
         });
       }
     });
@@ -172,8 +176,10 @@ function updateStudentRow(s) {
     sheet.getRange(rowIndex, COL.jobDad     + 1).setValue(s.jobDad     || '');
     sheet.getRange(rowIndex, COL.jobMom     + 1).setValue(s.jobMom     || '');
     sheet.getRange(rowIndex, COL.deacon     + 1).setValue(s.deacon     ? 'TRUE' : 'FALSE');
-    sheet.getRange(rowIndex, COL.confessor  + 1).setValue(s.confessor  || '');
-    sheet.getRange(rowIndex, COL.notes      + 1).setValue(s.notes      || '');
+    sheet.getRange(rowIndex, COL.confessor     + 1).setValue(s.confessor     || '');
+    sheet.getRange(rowIndex, COL.notes         + 1).setValue(s.notes         || '');
+    sheet.getRange(rowIndex, COL.area          + 1).setValue(s.area          || '');
+    sheet.getRange(rowIndex, COL.lordsBrethren + 1).setValue(s.lordsBrethren ? 'TRUE' : 'FALSE');
 
     return { status: 'updated', row: rowIndex };
   } catch(err) {
