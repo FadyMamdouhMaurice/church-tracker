@@ -3,10 +3,12 @@
 // ─────────────────────────────────────────────
 
 const Sheets = (() => {
-  const SCRIPT_URL = CONFIG.sheets.scriptUrl;
+  // Read URL dynamically so config changes take effect immediately
+  const _url = () => CONFIG.sheets.scriptUrl;
 
   // ── Load students (classes + students from all tabs) ──
   const loadStudents = async () => {
+    const SCRIPT_URL = _url();
     if (!SCRIPT_URL) throw new Error('Apps Script URL not configured');
 
     const res  = await fetch(`${SCRIPT_URL}?action=students`, { mode: 'cors' });
@@ -20,6 +22,7 @@ const Sheets = (() => {
 
   // ── Sync a written record back to Sheets ─────────────
   const syncRecord = (record) => {
+    const SCRIPT_URL = _url();
     if (!SCRIPT_URL) return;
 
     const student = State.getStudentById(record.studentId);
@@ -42,6 +45,7 @@ const Sheets = (() => {
 
   // ── Sync student edit to Google Sheets ──────────────────
   const syncStudentEdit = (student) => {
+    const SCRIPT_URL = _url();
     if (!SCRIPT_URL) return;
     fetch(SCRIPT_URL, {
       method:  'POST',
