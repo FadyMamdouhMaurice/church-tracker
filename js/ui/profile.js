@@ -104,7 +104,7 @@ const ProfileScreen = (() => {
           <div class="info-list__row">
             <dt>العنوان</dt><dd>${s.address}</dd>
           </div>` : ''}
-          ${s.area ? `
+          ${(s.area && s.area.trim()) ? `
           <div class="info-list__row">
             <dt>المنطقة</dt><dd>${s.area}</dd>
           </div>` : ''}
