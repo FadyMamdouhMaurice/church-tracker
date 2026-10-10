@@ -57,8 +57,10 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     if (body.action === 'saveRecord')    return buildResponse(saveRecord(body.record));
     if (body.action === 'updateStudent') return buildResponse(updateStudentRow(body.student));
-    if (body.action === 'uploadPhoto')   return buildResponse(uploadPhoto(body));
-    if (body.action === 'getPhoto')      return buildResponse(getStudentPhoto(body.studentId));
+    if (body.action === 'uploadPhoto')    return buildResponse(uploadPhoto(body));
+    if (body.action === 'getPhoto')       return buildResponse(getStudentPhoto(body.studentId));
+    if (body.action === 'transferStudent') return buildResponse(transferStudent(body));
+    if (body.action === 'addStudent')      return buildResponse(addStudent(body));
     return buildResponse({ error: 'unknown action' });
   } catch(err) {
     return buildResponse({ error: err.message });
@@ -294,6 +296,86 @@ function getStudentPhoto(studentId) {
       }
     }
     return { url: null };
+  } catch(err) {
+    return { error: err.message };
+  }
+}
+
+// ── Transfer student to another class ────────
+// POST { action:'transferStudent', studentName, fromClass, toClass }
+function transferStudent(params) {
+  try {
+    var ss        = SpreadsheetApp.openById(SHEET_ID);
+    var fromSheet = ss.getSheetByName(params.fromClass);
+    var toSheet   = ss.getSheetByName(params.toClass);
+
+    if (!fromSheet) return { error: 'الفصل القديم غير موجود: ' + params.fromClass };
+    if (!toSheet)   return { error: 'الفصل الجديد غير موجود: ' + params.toClass };
+
+    // Find student row in source sheet
+    var rows     = fromSheet.getDataRange().getValues();
+    var rowIndex = -1;
+    for (var i = 1; i < rows.length; i++) {
+      if (String(rows[i][COL.name]).trim() === String(params.studentName).trim()) {
+        rowIndex = i;
+        break;
+      }
+    }
+    if (rowIndex === -1) return { error: 'المخدوم غير موجود في الفصل: ' + params.studentName };
+
+    // Copy row data
+    var studentRow = rows[rowIndex].slice(); // clone
+
+    // Update newClass column to reflect new class
+    studentRow[COL.newClass] = params.toClass;
+
+    // Append to destination sheet
+    toSheet.appendRow(studentRow);
+
+    // Delete from source sheet (delete the row entirely)
+    fromSheet.deleteRow(rowIndex + 1); // +1 because sheets are 1-based
+
+    return { status: 'transferred', from: params.fromClass, to: params.toClass };
+  } catch(err) {
+    return { error: err.message };
+  }
+}
+
+// ── Add new student to a class ────────────────
+// POST { action:'addStudent', student:{ name, cls, birthday, address, area,
+//         phones:{child,mom,dad}, school, jobDad, jobMom, deacon,
+//         lordsBrethren, confessor, notes } }
+function addStudent(params) {
+  try {
+    var ss    = SpreadsheetApp.openById(SHEET_ID);
+    var s     = params.student;
+    var cls   = s.cls ? s.cls.replace(/_/g, ' ') : '';
+    var sheet = ss.getSheetByName(cls);
+    if (!sheet) return { error: 'الفصل غير موجود: ' + cls };
+
+    // Build row matching COL indices
+    // A  B(oldCls)  C(newCls)  D(bday)  E(addr)  F(phoneChild)  G(phoneMom)  H(phoneDad)
+    // I(school)  J(jobDad)  K(jobMom)  L(deacon)  M(confessor)  N(notes)  O(area)  P(lordsBrethren)
+    var row = new Array(16).fill('');
+    row[COL.name]          = s.name        || '';
+    row[COL.oldClass]      = cls;
+    row[COL.newClass]      = cls;
+    row[COL.birthday]      = s.birthday    || '';
+    row[COL.address]       = s.address     || '';
+    row[COL.phoneChild]    = (s.phones && s.phones.child) || '';
+    row[COL.phoneMom]      = (s.phones && s.phones.mom)   || '';
+    row[COL.phoneDad]      = (s.phones && s.phones.dad)   || '';
+    row[COL.school]        = s.school      || '';
+    row[COL.jobDad]        = s.jobDad      || '';
+    row[COL.jobMom]        = s.jobMom      || '';
+    row[COL.deacon]        = s.deacon      ? 'TRUE' : 'FALSE';
+    row[COL.confessor]     = s.confessor   || '';
+    row[COL.notes]         = s.notes       || '';
+    row[COL.area]          = s.area        || '';
+    row[COL.lordsBrethren] = s.lordsBrethren ? 'TRUE' : 'FALSE';
+
+    sheet.appendRow(row);
+    return { status: 'added', cls: cls };
   } catch(err) {
     return { error: err.message };
   }
