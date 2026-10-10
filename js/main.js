@@ -79,10 +79,17 @@ const _registerSW = () => {
 const _bootStudents = async (hasCache, cacheAgeMin) => {
   const FRESH = 10; // minutes
 
-  if (hasCache && cacheAgeMin < FRESH) {
-    // Fresh cache — use immediately, refresh silently
+  const cachedStudentCount = State.get('students')?.length ?? 0;
+
+  if (hasCache && cacheAgeMin < FRESH && cachedStudentCount > 0) {
+    // Fresh cache with real data — use immediately, refresh silently
     _refreshInBackground();
     return;
+  }
+
+  // Cache empty or stale — force full reload
+  if (hasCache && cachedStudentCount === 0) {
+    console.log('[Boot] Cache has 0 students — forcing reload');
   }
 
   if (hasCache && !navigator.onLine) {
