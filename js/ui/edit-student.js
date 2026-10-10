@@ -60,8 +60,20 @@ const EditStudentScreen = (() => {
         <div class="edit-section__title">👦 بيانات الولد</div>
 
         ${_field('name',    'الاسم الكامل',   s.name,    'text')}
-        ${_field('address', 'العنوان',         s.address, 'textarea')}
-        ${_field('school',  'المدرسة',         s.school,  'text')}
+        <div class="form-group">
+          <label>تاريخ الميلاد</label>
+          <input id="field-birthday" type="date" value="${s.birthday ?? ''}">
+        </div>
+        ${_field('address', 'العنوان', s.address, 'textarea')}
+        <div class="form-group">
+          <label>المنطقة</label>
+          <select id="field-area">
+            <option value="">— اختار المنطقة —</option>
+            ${['أرض الجنينة','الخصوص','عرب الطوايلة','زهور يمين','زهور شمال','حول الكنيسة','زهور']
+              .map(a => `<option value="${a}" ${(s.area ?? '') === a ? 'selected' : ''}>${a}</option>`).join('')}
+          </select>
+        </div>
+        ${_field('school',  'المدرسة', s.school, 'text')}
         <div class="form-group">
           <label>الشمامسة</label>
           <div class="toggle-row">
@@ -69,6 +81,16 @@ const EditStudentScreen = (() => {
               <input type="checkbox" id="field-deacon" ${s.deacon ? 'checked' : ''}>
               <span class="toggle-track"><span class="toggle-thumb"></span></span>
               <span>${s.deacon ? 'شماس ✓' : 'ليس شماساً'}</span>
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>أخوة الرب</label>
+          <div class="toggle-row">
+            <label class="toggle-label">
+              <input type="checkbox" id="field-lords-brethren" ${s.lordsBrethren ? 'checked' : ''}>
+              <span class="toggle-track"><span class="toggle-thumb"></span></span>
+              <span>${s.lordsBrethren ? 'أخوة الرب ✓' : 'لا'}</span>
             </label>
           </div>
         </div>
@@ -103,10 +125,14 @@ const EditStudentScreen = (() => {
     Utils.el('photo-input-camera')?.addEventListener('change',  e => _onPhotoSelected(e));
     Utils.el('photo-input-gallery')?.addEventListener('change', e => _onPhotoSelected(e));
 
-    // Toggle label for deacon checkbox
+    // Toggle labels
     Utils.el('field-deacon')?.addEventListener('change', function() {
       this.nextElementSibling.nextElementSibling.textContent =
         this.checked ? 'شماس ✓' : 'ليس شماساً';
+    });
+    Utils.el('field-lords-brethren')?.addEventListener('change', function() {
+      this.nextElementSibling.nextElementSibling.textContent =
+        this.checked ? 'أخوة الرب ✓' : 'لا';
     });
   };
 
@@ -156,10 +182,13 @@ const EditStudentScreen = (() => {
     // Collect all field values
     const updated = {
       ...s,
-      name:      _val('name'),
-      address:   _val('address'),
-      school:    _val('school'),
-      deacon:    Utils.el('field-deacon')?.checked ?? s.deacon,
+      name:          _val('name'),
+      birthday:      Utils.el('field-birthday')?.value || s.birthday || '',
+      address:       _val('address'),
+      area:          Utils.el('field-area')?.value || '',
+      school:        _val('school'),
+      deacon:        Utils.el('field-deacon')?.checked         ?? s.deacon,
+      lordsBrethren: Utils.el('field-lords-brethren')?.checked ?? s.lordsBrethren ?? false,
       phones: {
         child: _val('phone-child'),
         mom:   _val('phone-mom'),
@@ -169,8 +198,8 @@ const EditStudentScreen = (() => {
       jobMom:    _val('job-mom'),
       confessor: _val('confessor'),
       notes:     _val('notes'),
-      _editedBy:   State.get('user').displayName,
-      _editedAt:   new Date().toISOString(),
+      _editedBy: State.get('user').displayName,
+      _editedAt: new Date().toISOString(),
     };
 
     // 1. Update local State immediately
