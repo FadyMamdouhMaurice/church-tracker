@@ -20,6 +20,7 @@ const HomeScreen = (() => {
     State.on('recordsChanged',     _renderStats);
     State.on('activeClassChanged', _render);
     State.on('userChanged',        _render);
+    State.on('studentsLoaded',     _render);  // re-render when students arrive from Sheets
 
     // Lesson bell
     Utils.on('lesson-bell-btn',   'click', _openLessonModal);
