@@ -1160,3 +1160,15 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 .last-update-card__label { font-size: 11px; color: var(--text-2); }
 .last-update-card__date  { font-size: 13px; font-weight: 700; color: var(--text); }
 .last-update-card__by    { font-size: 12px; color: var(--blue-2); font-weight: 600; flex-shrink: 0; }
+
+/* ── Add student + transfer button ──────────── */
+.home-action-card--add      { border-top-color: #27ae60; }
+.action-btn--transfer       { border-color:#e67e22; color:#e67e22; background:#fff8f0; }
+.action-row--5              { grid-template-columns: repeat(5,1fr); }
+
+/* 6 cards on home */
+.home-actions-grid.has-6 {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (min-width:600px)  { .home-actions-grid.has-6 { grid-template-columns: repeat(3,1fr); } }
+@media (min-width:900px)  { .home-actions-grid.has-6 { grid-template-columns: repeat(6,1fr); } }
