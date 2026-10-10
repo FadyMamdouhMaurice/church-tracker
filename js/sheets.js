@@ -11,12 +11,36 @@ const Sheets = (() => {
     const SCRIPT_URL = _url();
     if (!SCRIPT_URL) throw new Error('Apps Script URL not configured');
 
-    const res  = await fetch(`${SCRIPT_URL}?action=students`, { mode: 'cors' });
+    console.log('[Sheets] Loading from:', SCRIPT_URL.slice(0, 60) + '...');
+
+    let res;
+    try {
+      res = await fetch(`${SCRIPT_URL}?action=students`, { mode: 'cors' });
+    } catch(e) {
+      console.error('[Sheets] fetch failed:', e.message);
+      throw e;
+    }
+
+    console.log('[Sheets] HTTP status:', res.status, res.statusText);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
+    const text = await res.text();
+    console.log('[Sheets] Response length:', text.length, '| First 100 chars:', text.slice(0, 100));
 
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch(e) {
+      console.error('[Sheets] JSON parse failed:', text.slice(0, 200));
+      throw new Error('Invalid JSON response');
+    }
+
+    if (data.error) {
+      console.error('[Sheets] Apps Script error:', data.error);
+      throw new Error(data.error);
+    }
+
+    console.log('[Sheets] Loaded:', data.classes?.length, 'classes,', data.students?.length, 'students');
     return { classes: data.classes, students: data.students };
   };
 
