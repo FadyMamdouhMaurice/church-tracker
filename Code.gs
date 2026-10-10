@@ -88,9 +88,14 @@ function getStudents() {
 
         students.push({
           id:        id++,
-          cls:       (clean(r[COL.newClass]) && nameToId(clean(r[COL.newClass])) !== classId)
-                       ? nameToId(clean(r[COL.newClass]))
-                       : classId,
+          cls:       (function() {
+                       var nc = clean(r[COL.newClass]);
+                       if (!nc) return classId;
+                       // Normalize: add "فصل " prefix if missing
+                       if (nc && nc.indexOf('فصل') !== 0) nc = 'فصل ' + nc;
+                       var ncId = nameToId(nc);
+                       return ncId !== classId ? ncId : classId;
+                     })(),
           name:      sName,
           birthday:  cleanDate(r[COL.birthday]),
           address:   clean(r[COL.address]),
