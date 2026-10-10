@@ -70,7 +70,8 @@ const ProfileScreen = (() => {
         </div>
         <h2 class="profile-header__name">${s.name}</h2>
         <p class="profile-header__class">${cls?.name ?? ''}
-          ${s.deacon ? ' <span class="badge badge--purple">شماس</span>' : ''}
+          ${s.deacon        ? ' <span class="badge badge--purple">شماس</span>' : ''}
+          ${s.lordsBrethren ? ' <span class="badge badge--green">أخوة الرب</span>' : ''}
         </p>
         ${bdFormatted ? `<p class="profile-header__birthday">🎂 ${bdFormatted}</p>` : ''}
       </div>
@@ -103,6 +104,10 @@ const ProfileScreen = (() => {
           <div class="info-list__row">
             <dt>العنوان</dt><dd>${s.address}</dd>
           </div>` : ''}
+          ${s.area ? `
+          <div class="info-list__row">
+            <dt>المنطقة</dt><dd>${s.area}</dd>
+          </div>` : ''}
           ${s.school ? `
           <div class="info-list__row">
             <dt>المدرسة</dt><dd>${s.school}</dd>
@@ -133,6 +138,10 @@ const ProfileScreen = (() => {
           <div class="info-list__row">
             <dt>الشمامسة</dt>
             <dd>${s.deacon ? '<span class="badge badge--purple">شماس ✓</span>' : 'لا'}</dd>
+          </div>
+          <div class="info-list__row">
+            <dt>أخوة الرب</dt>
+            <dd>${s.lordsBrethren ? '<span class="badge badge--green">أخوة الرب ✓</span>' : 'لا'}</dd>
           </div>
         </dl>
       </div>
