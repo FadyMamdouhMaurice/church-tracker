@@ -20,7 +20,12 @@ const HomeScreen = (() => {
     State.on('recordsChanged',     _renderStats);
     State.on('activeClassChanged', _render);
     State.on('userChanged',        _render);
-    State.on('studentsLoaded',     _render);  // re-render when students arrive from Sheets
+    State.on('studentsLoaded', () => {
+      // Only re-render if home screen is currently active
+      if (document.getElementById('home-screen')?.classList.contains('active')) {
+        _render();
+      }
+    });
 
     // Lesson bell
     Utils.on('lesson-bell-btn',   'click', _openLessonModal);
