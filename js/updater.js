@@ -4,8 +4,24 @@
 
 const Updater = (() => {
 
+  // ── Force unregister stale SW if version mismatch ──
+  const _forceRefreshIfStale = async () => {
+    try {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      // If there are multiple registrations, unregister all and reload
+      if (regs.length > 1) {
+        for (const reg of regs) await reg.unregister();
+        window.location.reload();
+        return;
+      }
+    } catch(e) {}
+  };
+
   const init = () => {
     if (!('serviceWorker' in navigator)) return;
+
+    // Check for stale registrations on start
+    _forceRefreshIfStale();
 
     navigator.serviceWorker.ready.then(reg => {
       // Check for update every 60 seconds (handles long sessions)
