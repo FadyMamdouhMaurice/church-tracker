@@ -23,6 +23,7 @@ window.addEventListener('load', async () => {
   ServantAttendanceScreen.init();
   MassAttendanceScreen.init();
   AddStudentScreen.init();
+  await ServantManagement.init();
   EventsScreen.init();
   ReportsScreen.init();
   EditStudentScreen.init();
