@@ -24,7 +24,7 @@ const CONFIG = {
 
   sheets: {
     id:        '1nChuW3S20fCre9fL7N935EbTfG7AvwQVlCvB4o06TTY',
-    scriptUrl: 'https://script.google.com/macros/s/AKfycbz9EV-CmW-dvSA_KjOPUkSwAkyPYukeEuPQJu6bbkXbzQTT-u6P2At4sTJdG3cZ_an3/exec',
+    scriptUrl: 'https://script.google.com/macros/s/AKfycbxUYqY-xZesZL4gBDuvWUC9gbT2SuMLb8wphBOOfGKhsiM9nQwd7Oq5_j_ZBOxDtsGE/exec',
     systemTabs: ['سجل الحضور', 'سجل المكالمات', 'سجل الافتقاد', 'إعدادات'],
   },
 
