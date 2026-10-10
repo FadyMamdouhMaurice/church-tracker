@@ -23,7 +23,6 @@ window.addEventListener('load', async () => {
   ServantAttendanceScreen.init();
   MassAttendanceScreen.init();
   AddStudentScreen.init();
-  await ServantManagement.init();
   EventsScreen.init();
   ReportsScreen.init();
   EditStudentScreen.init();
@@ -42,6 +41,9 @@ window.addEventListener('load', async () => {
 
   // 8. Init FCM notifications
   await Notifications.init();
+
+  // 8.5 Init servant management (needs Firebase to be ready)
+  ServantManagement.init(); // non-blocking, has its own retry logic
 
   // 9. Navigate
   Router.go(hasUser ? 'home' : 'login');
