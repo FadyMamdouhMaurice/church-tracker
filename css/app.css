@@ -1235,3 +1235,19 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 .smgmt-stat span     { font-size: 16px; display: block; }
 .smgmt-stat          { font-size: 15px; font-weight: 700; }
 .smgmt-stat small    { display: block; font-size: 9px; color: var(--text-2); margin-top: 2px; }
+
+/* ── History row delete button ───────────────── */
+.history-row         { position: relative; }
+.history-delete-btn  {
+  background:  none;
+  border:      none;
+  font-size:   16px;
+  cursor:      pointer;
+  opacity:     .35;
+  padding:     4px 6px;
+  flex-shrink: 0;
+  transition:  opacity .15s;
+  align-self:  flex-start;
+}
+.history-delete-btn:hover  { opacity: 1; }
+.history-delete-btn:active { transform: scale(.9); }
