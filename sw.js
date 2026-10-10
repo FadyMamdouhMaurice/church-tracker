@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 //  sw.js  —  Service Worker (offline-first PWA)
 //  Version bump here forces cache refresh:
-const VERSION = 'v42';
+const VERSION = 'v43';
 // ─────────────────────────────────────────────
 
 const CACHE_NAME = `church-tracker-${VERSION}`;
@@ -26,6 +26,11 @@ const CACHE_SHELL = [
   './js/ui/servant-attendance.js',
   './js/ui/mass-attendance.js',
   './js/ui/edit-student.js',
+  './js/ui/add-student.js',
+  './js/ui/servant-management.js',
+  './js/ui/events.js',
+  './js/ui/reports.js',
+  './js/ui/mass-attendance.js',
   './js/notifications.js',
   './js/updater.js',
   './js/main.js',
