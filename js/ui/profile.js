@@ -49,6 +49,7 @@ const ProfileScreen = (() => {
     const s       = State.getStudentById(_currentId);
     const cls     = State.getClassById(s.cls);
     const records = State.getRecordsFor(_currentId);
+    const user    = State.get('user');
     const urgent  = s.notes?.startsWith('⚠️');
     const bdSoon  = _isBirthdaySoon(s.birthday);
 
