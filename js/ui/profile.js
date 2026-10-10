@@ -146,6 +146,27 @@ const ProfileScreen = (() => {
         </dl>
       </div>
 
+      <!-- ③.٥ آخر تحديث -->
+      ${(() => {
+        const edits = records
+          .filter(r => r.type === 'student-edit' && r.studentId === s.id)
+          .sort((a, b) => (b.createdAt ?? b.date ?? '').localeCompare(a.createdAt ?? a.date ?? ''));
+        if (!edits.length) return '';
+        const last = edits[0];
+        const dateLabel = last.createdAt
+          ? new Date(last.createdAt).toLocaleDateString('ar-EG', { day:'numeric', month:'long', year:'numeric' })
+          : Utils.formatDate(last.date ?? '');
+        return `
+        <div class="last-update-card">
+          <span class="last-update-card__icon">🕐</span>
+          <div class="last-update-card__info">
+            <span class="last-update-card__label">آخر تحديث للملف</span>
+            <span class="last-update-card__date">${dateLabel}</span>
+          </div>
+          <span class="last-update-card__by">${last.by ?? '—'}</span>
+        </div>`;
+      })()}
+
       <!-- ④ ملاحظات — always shown if exists, even if not urgent -->
       ${s.notes ? `
       <div class="info-card">
