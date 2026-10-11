@@ -1411,3 +1411,61 @@ input,select,textarea { font-family:inherit; color:var(--text); }
   padding: 9px 14px; font-size: 13px; font-weight: 700; font-family: inherit;
   cursor: pointer; white-space: nowrap;
 }
+
+/* ════════════════════════════════════════════
+   POINTS SYSTEM
+   ════════════════════════════════════════════ */
+
+/* Home preview card */
+.home-pts-card            { background:linear-gradient(135deg,#f39c12,#e67e22);border-radius:var(--radius);padding:14px;margin-bottom:10px;color:white; }
+.home-pts-card__header    { font-size:13px;font-weight:700;margin-bottom:10px;opacity:.9; }
+.home-pts-card__list      { display:flex;flex-direction:column;gap:6px; }
+.home-pts-row             { display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);border-radius:var(--radius-sm);padding:7px 10px; }
+.home-pts-row__medal      { font-size:16px;flex-shrink:0; }
+.home-pts-row__name       { flex:1;font-size:13px;font-weight:600; }
+.home-pts-row__pts        { font-size:13px;font-weight:800;background:rgba(255,255,255,.25);padding:2px 8px;border-radius:10px; }
+
+/* Home action card */
+.home-action-card--leaderboard { border-top-color: #f39c12; }
+
+/* Profile points card */
+.profile-points-card         { display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#f39c12,#e67e22);border-radius:var(--radius);padding:14px;margin-bottom:10px;color:white; }
+.profile-points-card__left   { display:flex;align-items:center;gap:10px;flex:1; }
+.profile-points-card__icon   { font-size:28px; }
+.profile-points-card__label  { font-size:11px;opacity:.8; }
+.profile-points-card__val    { font-size:20px;font-weight:800; }
+.profile-points-card__val--total { font-size:16px; }
+.profile-points-card__divider{ width:1px;height:36px;background:rgba(255,255,255,.3); }
+.profile-points-card__right  { text-align:center;padding:0 8px; }
+.profile-points-card__arrow  { font-size:20px;opacity:.7; }
+
+/* Leaderboard screen */
+.lb-mode-toggle   { display:flex;gap:6px;margin-bottom:12px; }
+.lb-mode-btn      { flex:1;padding:9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;color:var(--text);transition:all .15s; }
+.lb-mode-btn.active { background:#f39c12;color:white;border-color:#f39c12; }
+
+/* Podium */
+.lb-podium        { display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:16px;padding:0 8px; }
+.lb-podium__slot  { display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1;background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:10px 6px;box-shadow:var(--shadow); }
+.lb-podium__medal { font-size:22px;margin-bottom:4px; }
+.lb-podium__avatar{ width:38px;height:38px;border-radius:50%;background:var(--blue);color:white;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;margin-bottom:4px; }
+.lb-podium__name  { font-size:11px;font-weight:700;text-align:center;line-height:1.2; }
+.lb-podium__pts   { font-size:11px;color:var(--text-2);margin-top:2px; }
+
+/* Leaderboard list rows */
+.lb-list          { display:flex;flex-direction:column;gap:6px; }
+.lb-row           { display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:var(--radius-sm);padding:11px 13px;box-shadow:var(--shadow);cursor:pointer; }
+.lb-row__rank     { font-size:18px;flex-shrink:0;width:28px;text-align:center; }
+.lb-row__avatar   { width:34px;height:34px;border-radius:50%;background:var(--blue-2);color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0; }
+.lb-row__info     { flex:1;min-width:0; }
+.lb-row__name     { font-size:13px;font-weight:700; }
+.lb-row__cls      { font-size:11px;color:var(--text-2); }
+.lb-row__right    { text-align:left; }
+.lb-row__pts      { font-size:15px;font-weight:800;color:#f39c12; }
+.lb-row__pts span { font-size:10px;color:var(--text-2);font-weight:400; }
+.lb-row__sub      { font-size:10px;color:var(--text-2); }
+.lb-adjust-btn    { background:none;border:none;font-size:16px;cursor:pointer;opacity:.5;padding:4px;flex-shrink:0; }
+.lb-adjust-btn:hover { opacity:1; }
+
+/* Adjust modal */
+.lb-calc-preview  { display:grid;grid-template-columns:repeat(3,1fr);gap:8px;background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px; }
