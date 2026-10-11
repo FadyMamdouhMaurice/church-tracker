@@ -1310,3 +1310,18 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 .info-card__title.collapsible__header + * {
   padding-top: 4px;
 }
+
+/* ── ps-card__ago ────────────────────────────── */
+.ps-card__ago {
+  font-size:  9px;
+  color:      var(--green);
+  font-weight: 600;
+}
+.ps-card__last {
+  font-size:  9px;
+  color:      var(--text-2);
+  margin-top: 4px;
+  border-top: 1px solid var(--bg);
+  padding-top: 4px;
+  line-height: 1.4;
+}
