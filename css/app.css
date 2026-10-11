@@ -1296,3 +1296,17 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 }
 .collapsible__header:active { opacity: .75; }
 .collapsible__icon { font-size: 11px; color: var(--text-2); }
+
+/* ── Collapsible body transition ─────────────── */
+.collapsible__body,
+[id^="sec-"] {
+  transition: none;
+  overflow:   hidden;
+}
+.info-card__title.collapsible__header {
+  margin-bottom: 0;
+  padding-bottom: 10px;
+}
+.info-card__title.collapsible__header + * {
+  padding-top: 4px;
+}
