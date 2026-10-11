@@ -1251,3 +1251,48 @@ input,select,textarea { font-family:inherit; color:var(--text); }
 }
 .history-delete-btn:hover  { opacity: 1; }
 .history-delete-btn:active { transform: scale(.9); }
+
+/* ── Version badge ───────────────────────────── */
+.version-badge {
+  font-size:     10px;
+  background:    rgba(255,255,255,.15);
+  color:         rgba(255,255,255,.8);
+  padding:       2px 7px;
+  border-radius: 20px;
+  letter-spacing:.3px;
+  font-weight:   600;
+  flex-shrink:   0;
+}
+
+/* ── Profile stats grid ──────────────────────── */
+.profile-stats-grid {
+  display:               grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:                   8px;
+  margin-bottom:         10px;
+}
+@media (max-width: 380px) {
+  .profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.ps-card {
+  background:    var(--surface);
+  border-radius: var(--radius);
+  padding:       12px 8px;
+  text-align:    center;
+  box-shadow:    var(--shadow);
+}
+.ps-card__icon  { font-size: 20px; margin-bottom: 4px; }
+.ps-card__count { font-size: 22px; font-weight: 800; color: var(--blue); line-height: 1; }
+.ps-card__label { font-size: 10px; color: var(--text-2); margin-top: 3px; }
+.ps-card__last  { font-size: 9px;  color: var(--text-2); margin-top: 4px; border-top: 1px solid var(--bg); padding-top: 4px; }
+
+/* ── Collapsible sections ────────────────────── */
+.collapsible__header {
+  cursor:          pointer;
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  user-select:     none;
+}
+.collapsible__header:active { opacity: .75; }
+.collapsible__icon { font-size: 11px; color: var(--text-2); }
