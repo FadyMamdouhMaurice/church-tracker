@@ -80,5 +80,5 @@ const Utils = (() => {
 
   return { today, daysSince, weekKey, weekLabel, formatDate,
            buildWeekOptions, el, html, show, hide, on,
-           truncate, initials };
+           truncate, initials, timeAgo };
 })();
