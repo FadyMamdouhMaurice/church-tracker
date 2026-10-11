@@ -15,12 +15,14 @@ const HomeScreen = (() => {
     Utils.on('btn-events',      'click', () => Router.go('events'));
     Utils.on('btn-reports',     'click', () => Router.go('reports'));
     Utils.on('btn-filter',      'click', () => Router.go('filter'));
+    Utils.on('btn-leaderboard',  'click', () => Router.go('leaderboard'));
     Utils.on('btn-admin',       'click', () => Router.go('admin'));
     Utils.on('btn-servant-att', 'click', () => Router.go('servant-att'));
 
     State.on('recordsChanged',     _renderStats);
     State.on('activeClassChanged', _render);
     State.on('userChanged',        _render);
+    State.on('recordsChanged', _renderPointsPreview);
     State.on('studentsLoaded', () => {
       // Only re-render if home screen is currently active
       if (document.getElementById('home-screen')?.classList.contains('active')) {
@@ -61,6 +63,7 @@ const HomeScreen = (() => {
     _renderStats();
     _renderBirthdayBanner();
     _checkLesson();
+    _renderPointsPreview();
   };
 
   const _buildClassSwitcher = () => {
@@ -233,6 +236,35 @@ const HomeScreen = (() => {
     Utils.el('lesson-modal-overlay')?.classList.add('hidden');
   };
   // ──────────────────────────────────────────
+
+  // ── Points preview (top 3 in own class) ─────
+  const _renderPointsPreview = () => {
+    const el = Utils.el('home-points-preview');
+    if (!el) return;
+    const user     = State.get('user');
+    const students = State.getMyStudents();
+    const records  = State.get('records');
+    if (!students.length) { el.style.display='none'; return; }
+
+    const top3 = Points.leaderboard(students, records, [], 'monthly', 3);
+    if (!top3.length) { el.style.display='none'; return; }
+
+    el.style.display = '';
+    el.innerHTML = `
+      <div class="home-pts-card" onclick="Router.go('leaderboard')" style="cursor:pointer">
+        <div class="home-pts-card__header">
+          🏆 أفضل المخدومين — ${new Date().toLocaleDateString('ar-EG',{month:'long'})}
+        </div>
+        <div class="home-pts-card__list">
+          ${top3.map((s,i)=>`
+            <div class="home-pts-row">
+              <span class="home-pts-row__medal">${Points.medal(i)}</span>
+              <span class="home-pts-row__name">${s.name.split(' ').slice(0,2).join(' ')}</span>
+              <span class="home-pts-row__pts">${s.monthly} نقطة</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  };
 
   const _logout = () => { State.setUser(null); Router.go('login'); };
 
