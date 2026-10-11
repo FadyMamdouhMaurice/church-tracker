@@ -2,6 +2,8 @@
 //  config.js  —  All app-wide constants
 // ─────────────────────────────────────────────
 
+const APP_VERSION = 'v59';
+
 const CONFIG = {
   church: {
     name:     'كنيسة السيدة العذراء مريم',
