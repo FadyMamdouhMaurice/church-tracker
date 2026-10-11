@@ -191,6 +191,19 @@ const ProfileScreen = (() => {
 
     Utils.on('p-att-btn',      'click', () => Router.go('attendance'));
 
+    // Collapse/expand toggle
+    Utils.el('profile-content')?.addEventListener('click', e => {
+      const header = e.target.closest('.collapsible__header');
+      if (!header) return;
+      const targetId = header.dataset.target;
+      const body     = Utils.el(targetId);
+      const icon     = header.querySelector('.collapsible__icon');
+      if (!body) return;
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : '';
+      if (icon) icon.textContent = isOpen ? '▼' : '▲';
+    });
+
     // Delete record (admin only)
     Utils.el('profile-content')?.addEventListener('click', async e => {
       const btn = e.target.closest('.history-delete-btn');
