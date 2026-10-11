@@ -2,7 +2,7 @@
 //  config.js  —  All app-wide constants
 // ─────────────────────────────────────────────
 
-const APP_VERSION = 'v67';
+const APP_VERSION = 'v68';
 
 const CONFIG = {
   church: {
