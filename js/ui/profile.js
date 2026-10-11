@@ -77,6 +77,30 @@ const ProfileScreen = (() => {
         ${bdFormatted ? `<p class="profile-header__birthday">🎂 ${bdFormatted}</p>` : ''}
       </div>
 
+      <!-- Stats box -->
+      <div class="profile-stats-grid">
+        ${(()=>{
+          const massRecs  = records.filter(r=>r.type==='mass-attendance'&&r.studentId===s.id&&r.present);
+          const attRecs   = records.filter(r=>r.type==='attendance'&&r.studentId===s.id&&r.present);
+          const callRecs  = records.filter(r=>r.type==='call'&&r.studentId===s.id);
+          const visitRecs = records.filter(r=>r.type==='visit'&&r.studentId===s.id);
+          const latest = arr => [...arr].sort((a,b)=>(b.date??'').localeCompare(a.date??'')).at(0)?.date;
+          const fmt    = d => d ? Utils.formatDate(d) : '—';
+          return [
+            {icon:'⛪', count:massRecs.length,  label:'حضور القداس',      last:fmt(latest(massRecs))},
+            {icon:'📋', count:attRecs.length,   label:'مدارس الأحد',      last:fmt(latest(attRecs))},
+            {icon:'📞', count:callRecs.length,  label:'افتقاد تليفوني',   last:fmt(latest(callRecs))},
+            {icon:'🏠', count:visitRecs.length, label:'افتقاد منزلي',     last:fmt(latest(visitRecs))},
+          ].map(c=>`
+            <div class="ps-card">
+              <div class="ps-card__icon">${c.icon}</div>
+              <div class="ps-card__count">${c.count}</div>
+              <div class="ps-card__label">${c.label}</div>
+              <div class="ps-card__last">${c.last}</div>
+            </div>`).join('');
+        })()}
+      </div>
+
       <div class="action-row ${user?.role === 'admin' ? 'action-row--5' : 'action-row--4'}">
         <button class="action-btn action-btn--att"   id="p-att-btn"> <span>📋</span> حضور   </button>
         <button class="action-btn action-btn--call"  id="p-call-btn"><span>📞</span> مكالمة </button>
@@ -88,7 +112,8 @@ const ProfileScreen = (() => {
 
       <!-- ① الاتصال السريع -->
       <div class="info-card">
-        <h3 class="info-card__title">📱 الاتصال السريع</h3>
+        <h3 class="info-card__title collapsible__header" data-target="sec-phones">📱 الاتصال السريع <span class="collapsible__icon">▲</span></h3>
+        <div id="sec-phones">
         ${phones.length === 0
           ? '<p style="font-size:13px;color:var(--text-2)">لا توجد أرقام</p>'
           : phones.map(p => `
@@ -97,11 +122,12 @@ const ProfileScreen = (() => {
               <span class="call-btn__number">${p.number}</span>
               <span class="call-btn__icon">📞</span>
             </a>`).join('')}
-      </div>
+      </div></div>
 
       <!-- ② بيانات التواصل -->
       <div class="info-card">
-        <h3 class="info-card__title">📍 بيانات التواصل</h3>
+        <h3 class="info-card__title collapsible__header" data-target="sec-contact">📍 بيانات التواصل <span class="collapsible__icon">▲</span></h3>
+        <div id="sec-contact">
         <dl class="info-list">
           ${s.address ? `
           <div class="info-list__row">
@@ -120,11 +146,12 @@ const ProfileScreen = (() => {
             <dt>تاريخ الميلاد</dt><dd>${bdFormatted}</dd>
           </div>` : ''}
         </dl>
-      </div>
+      </div></div>
 
       <!-- ③ بيانات الأسرة -->
       <div class="info-card">
-        <h3 class="info-card__title">👨‍👩‍👦 بيانات الأسرة</h3>
+        <h3 class="info-card__title collapsible__header" data-target="sec-family">👨‍👩‍👦 بيانات الأسرة <span class="collapsible__icon">▲</span></h3>
+        <div id="sec-family">
         <dl class="info-list">
           ${s.jobDad ? `
           <div class="info-list__row">
@@ -147,7 +174,7 @@ const ProfileScreen = (() => {
             <dd>${s.lordsBrethren ? '<span class="badge badge--green">أخوة الرب ✓</span>' : 'لا'}</dd>
           </div>
         </dl>
-      </div>
+      </div></div>
 
       <!-- ③.٥ آخر تحديث -->
       ${(() => {
@@ -179,10 +206,12 @@ const ProfileScreen = (() => {
 
       <!-- ⑤ سجل المتابعة -->
       <div class="info-card">
-        <h3 class="info-card__title">📊 سجل المتابعة</h3>
+        <h3 class="info-card__title collapsible__header" data-target="sec-history">📊 سجل المتابعة <span class="collapsible__icon">▲</span></h3>
+        <div id="sec-history">
         ${records.length === 0
           ? '<div class="empty-state"><div class="empty-state__icon">📭</div><p>لا يوجد سجل بعد</p></div>'
           : records.slice(0, 20).map(_historyRow).join('')}
+        </div>
       </div>
     `);
 
