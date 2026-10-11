@@ -405,9 +405,12 @@ const ProfileScreen = (() => {
         if (data.status === 'transferred') {
           overlay.remove();
           UI.toast(`✅ تم نقل ${s.name.split(' ')[0]} إلى ${toCls?.name}`);
-          // Reload students to reflect change
-          await Sheets.loadStudents();
-          Router.go('home');
+          // Update student cls in local state immediately
+          const updatedStudent = { ...s, cls: toClsId };
+          State.updateStudent(updatedStudent);
+          // Reload from Sheets in background
+          Sheets.reloadStudents();
+          Router.back();
         } else {
           if(errEl) errEl.textContent = '❌ ' + (data.error ?? 'خطأ');
           btn.disabled    = false;
