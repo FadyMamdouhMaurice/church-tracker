@@ -133,14 +133,27 @@ const HomeScreen = (() => {
 
     banner.innerHTML = `
       <div class="birthday-card">
-        <div class="birthday-card__header">
+        <div class="birthday-card__header collapsible__header" data-target="bd-list-body" style="cursor:pointer">
           🎂 أعياد ميلاد ${monthName}
-          <span class="birthday-card__count">${upcoming.length}</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <span class="birthday-card__count">${upcoming.length}</span>
+            <span class="collapsible__icon" style="font-size:11px;opacity:.7">▲</span>
+          </span>
         </div>
-        <div class="birthday-card__list">
+        <div id="bd-list-body" class="birthday-card__list">
           ${rows}
         </div>
       </div>`;
+
+    // Wire collapse for birthday banner
+    banner.querySelector('.collapsible__header')?.addEventListener('click', function() {
+      const body = document.getElementById('bd-list-body');
+      const icon = this.querySelector('.collapsible__icon');
+      if (!body) return;
+      const isOpen = body.style.display !== 'none';
+      body.style.display = isOpen ? 'none' : '';
+      if (icon) icon.textContent = isOpen ? '▼' : '▲';
+    });
   };
   // ──────────────────────────────────────────
 
