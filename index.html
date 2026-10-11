@@ -139,6 +139,11 @@
         <div class="home-action-card__label">إضافة مخدوم</div>
         <div class="home-action-card__sub">مخدوم جديد</div>
       </div>
+      <div id="btn-filter" class="home-action-card home-action-card--filter">
+        <div class="home-action-card__icon">🔍</div>
+        <div class="home-action-card__label">فلتر متقدم</div>
+        <div class="home-action-card__sub">بحث وتصدير</div>
+      </div>
           <div id="btn-mass" class="home-action-card home-action-card--mass">
         <div class="home-action-card__icon">⛪</div>
         <div class="home-action-card__label">حضور القداس</div>
@@ -352,6 +357,15 @@
   </div>
 </div>
 
+<!-- ═══ FILTER SCREEN ════════════════════════════════════ -->
+<div id="filter-screen" class="screen">
+  <div class="topbar">
+    <button id="filter-back" class="topbar__back">→</button>
+    <h1 class="topbar__title">فلتر متقدم</h1>
+  </div>
+  <div class="content" id="filter-content"></div>
+</div>
+
 <!-- ═══ ADD STUDENT SCREEN ═══════════════════════════════ -->
 <div id="add-student-screen" class="screen">
   <div class="topbar">
@@ -398,6 +412,7 @@
 <script src="js/ui/admin.js"></script>
 <script src="js/ui/servant-attendance.js"></script>
 <script src="js/ui/mass-attendance.js"></script>
+<script src="js/ui/filter-screen.js"></script>
 <script src="js/ui/add-student.js"></script>
 <script src="js/ui/servant-management.js"></script>
 <script src="js/ui/events.js"></script>
