@@ -314,16 +314,25 @@ const AdminScreen = (() => {
         </div>
       </div>`;
 
-    const section = (icon, title, count, items, showOffset=false, emptyMsg='لا توجد أعياد ميلاد') => `
+    let _bdSecIdx = 0;
+    const section = (icon, title, count, items, showOffset=false, emptyMsg='لا توجد أعياد ميلاد') => {
+      const sid = 'bd-sec-' + (_bdSecIdx++);
+      return `
       <div class="bd-section">
-        <div class="bd-section__header">
-          ${icon} ${title}
-          <span class="birthday-card__count">${count}</span>
+        <div class="bd-section__header collapsible__header" data-target="${sid}" style="cursor:pointer">
+          <span>${icon} ${title}</span>
+          <span style="display:flex;align-items:center;gap:6px">
+            <span class="birthday-card__count">${count}</span>
+            <span class="collapsible__icon" style="font-size:11px;opacity:.7">▲</span>
+          </span>
         </div>
-        ${items.length===0
-          ? `<p class="bd-empty">${emptyMsg}</p>`
-          : `<div class="m-list m-list--inset">${items.map(b=>bdCard(b,showOffset)).join('')}</div>`}
+        <div id="${sid}">
+          ${items.length===0
+            ? `<p class="bd-empty">${emptyMsg}</p>`
+            : `<div class="m-list m-list--inset">${items.map(b=>bdCard(b,showOffset)).join('')}</div>`}
+        </div>
       </div>`;
+    };
 
     Utils.html('admin-birthdays', `
       ${section('📅','هذا الأسبوع (7 أيام)', weekItems.length, weekItems, true, 'لا توجد أعياد ميلاد هذا الأسبوع')}
@@ -351,6 +360,19 @@ const AdminScreen = (() => {
     `);
 
     Utils.el('admin-birthdays')?.addEventListener('click',e=>{
+      // Collapsible
+      const hdr = e.target.closest('.collapsible__header');
+      if (hdr) {
+        const body = Utils.el(hdr.dataset.target);
+        const icon = hdr.querySelector('.collapsible__icon');
+        if (body) {
+          const isOpen = body.style.display !== 'none';
+          body.style.display = isOpen ? 'none' : '';
+          if (icon) icon.textContent = isOpen ? '▼' : '▲';
+        }
+        return;
+      }
+      // Profile open
       const c=e.target.closest('[data-id]');
       if(c) ProfileScreen.open(parseInt(c.dataset.id,10));
     });
