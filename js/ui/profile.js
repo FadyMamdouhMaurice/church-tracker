@@ -197,7 +197,6 @@ const ProfileScreen = (() => {
       if (!btn) return;
       const recordId = btn.dataset.recordId;
       if (!recordId) return;
-      if (!confirm('حذف هذا السجل نهائياً؟')) return;
       try {
         await firebase.firestore().collection('records').doc(recordId).delete();
         // Remove from local state
