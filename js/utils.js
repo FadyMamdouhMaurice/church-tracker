@@ -3,6 +3,28 @@
 // ─────────────────────────────────────────────
 
 const Utils = (() => {
+  // ── Time ago helper ──────────────────────
+  const timeAgo = (dateStr) => {
+    if (!dateStr) return '';
+    const now   = new Date();
+    const then  = new Date(dateStr + (dateStr.length === 10 ? 'T00:00:00' : ''));
+    const diff  = Math.floor((now - then) / (1000 * 60 * 60 * 24)); // days
+    if (diff === 0) return 'اليوم';
+    if (diff === 1) return 'أمس';
+    if (diff < 7)   return `منذ ${diff} أيام`;
+    const weeks = Math.floor(diff / 7);
+    if (weeks === 1) return 'منذ أسبوع';
+    if (weeks === 2) return 'منذ أسبوعين';
+    if (weeks < 5)   return `منذ ${weeks} أسابيع`;
+    const months = Math.floor(diff / 30);
+    if (months === 1) return 'منذ شهر';
+    if (months === 2) return 'منذ شهرين';
+    if (months < 12)  return `منذ ${months} أشهر`;
+    const years = Math.floor(diff / 365);
+    if (years === 1) return 'منذ سنة';
+    return `منذ ${years} سنوات`;
+  };
+
   // ── Date helpers ──────────────────────────
   const today = () => new Date().toISOString().split('T')[0];
 
