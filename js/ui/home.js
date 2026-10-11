@@ -36,6 +36,9 @@ const HomeScreen = (() => {
   };
 
   const _render = () => {
+    // Show version in topbar
+    const verEl = Utils.el('home-version-badge');
+    if (verEl && typeof APP_VERSION !== 'undefined') verEl.textContent = APP_VERSION;
     const user = State.get('user');
     if (!user) return;
 
