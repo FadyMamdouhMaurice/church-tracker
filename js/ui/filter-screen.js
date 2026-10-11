@@ -10,8 +10,6 @@ const FilterScreen = (() => {
 
   const init = () => {
     Utils.on('filter-back', 'click', () => Router.back());
-    Utils.on('filter-run',  'click', _run);
-    Utils.on('filter-export', 'click', _export);
   };
 
   const _onEnter = () => _render();
@@ -121,6 +119,9 @@ const FilterScreen = (() => {
       <!-- Results -->
       <div id="filter-results" style="margin-top:8px"></div>
     `);
+
+    // Wire run button (must be after HTML is rendered)
+    Utils.on('filter-run', 'click', _run);
 
     // Wire chips
     Utils.el('filter-type-chips')?.addEventListener('click', e => {
