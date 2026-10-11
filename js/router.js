@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────
 
 const Router = (() => {
-  const SCREENS = ['login','loading','home','students','attendance','profile','admin','servant-att','edit','mass','events','reports','add-student'];
+  const SCREENS = ['login','loading','home','students','attendance','profile','admin','servant-att','edit','mass','events','reports','add-student','filter'];
   let _stack  = [];
   let _mode   = 'profile';
   let _hooks  = {};
