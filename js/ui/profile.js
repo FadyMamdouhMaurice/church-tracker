@@ -85,12 +85,12 @@ const ProfileScreen = (() => {
           const callRecs  = records.filter(r=>r.type==='call'&&r.studentId===s.id);
           const visitRecs = records.filter(r=>r.type==='visit'&&r.studentId===s.id);
           const latest = arr => [...arr].sort((a,b)=>(b.date??'').localeCompare(a.date??'')).at(0)?.date;
-          const fmt    = d => d ? Utils.formatDate(d) : '—';
+          const fmtLast = d => d ? `${Utils.formatDate(d)}<br><span class="ps-card__ago">${Utils.timeAgo(d)}</span>` : '—';
           return [
-            {icon:'⛪', count:massRecs.length,  label:'حضور القداس',      last:fmt(latest(massRecs))},
-            {icon:'📋', count:attRecs.length,   label:'مدارس الأحد',      last:fmt(latest(attRecs))},
-            {icon:'📞', count:callRecs.length,  label:'افتقاد تليفوني',   last:fmt(latest(callRecs))},
-            {icon:'🏠', count:visitRecs.length, label:'افتقاد منزلي',     last:fmt(latest(visitRecs))},
+            {icon:'⛪', count:massRecs.length,  label:'حضور القداس',      last:fmtLast(latest(massRecs))},
+            {icon:'📋', count:attRecs.length,   label:'مدارس الأحد',      last:fmtLast(latest(attRecs))},
+            {icon:'📞', count:callRecs.length,  label:'افتقاد تليفوني',   last:fmtLast(latest(callRecs))},
+            {icon:'🏠', count:visitRecs.length, label:'افتقاد منزلي',     last:fmtLast(latest(visitRecs))},
           ].map(c=>`
             <div class="ps-card">
               <div class="ps-card__icon">${c.icon}</div>
