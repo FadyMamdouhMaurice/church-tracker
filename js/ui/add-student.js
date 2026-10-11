@@ -176,7 +176,7 @@ const AddStudentScreen = (() => {
       if (data.status === 'added') {
         UI.toast(`✅ تم إضافة ${name} لـ ${cls.replace(/_/g,' ')}`);
         // Reload students from Sheets
-        await Sheets.loadStudents();
+        await Sheets.reloadStudents();
         Router.back();
       } else {
         if(err) err.textContent = '❌ ' + (data.error ?? 'خطأ غير معروف');
