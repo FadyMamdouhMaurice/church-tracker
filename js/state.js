@@ -93,6 +93,8 @@ const State = (() => {
       store.set(CONFIG.cache.students, cached);
     }
     emit('studentUpdated', updated);
+    // Also emit studentsLoaded so home stats + students list re-render
+    emit('studentsLoaded', { classes: _data.classes, students: _data.students });
   };
 
   const addRecord = (record) => {
