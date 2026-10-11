@@ -22,6 +22,7 @@ window.addEventListener('load', async () => {
   AdminScreen.init();
   ServantAttendanceScreen.init();
   MassAttendanceScreen.init();
+  LeaderboardScreen.init();
   FilterScreen.init();
   AddStudentScreen.init();
   EventsScreen.init();
